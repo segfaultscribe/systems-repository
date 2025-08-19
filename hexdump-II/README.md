@@ -1,4 +1,4 @@
-# HEXDITCH : A hesdump implementation from scratch 
+# HEXDITCH : A hexdump implementation from scratch 
 
 A basic implementation of hexdump.
 
