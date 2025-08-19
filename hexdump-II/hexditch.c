@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 
 //ANSI color code escapes
 #define COLOR_RESET   "\x1b[0m"
@@ -40,10 +41,10 @@ void hexditch(FILE *f){
 }
 
 void print_help(const char *progname) {
+    printf("----------HEXDITCH------------\n\n");
     printf("Usage: %s [--color] <filename>\n", progname);
     printf("Options:\n");
     printf("  --color       Enable colored output\n");
-    printf("  --no-color    Disable colored output (default)\n");
     printf("  -h, --help    Show this help message\n");
 }
 
@@ -55,9 +56,9 @@ int main(int argc, char *argv[]){
     // }
 
     for(int i=1;i<argc;++i){
-        if(argv[i] == "--color"){
+        if(strcmp(argv[i], "--color") == 0){
             use_color = 1;
-        } else if(argv[i] == "-h" || argv[i] == "--help") {
+        } else if(strcmp(argv[i], "-h") ==0 || strcmp(argv[i], "--help") == 0) {
             print_help(argv[0]);
             return 0;
         } else if(argv[i][0] != '-' && filename == NULL){
@@ -68,9 +69,10 @@ int main(int argc, char *argv[]){
             return 1;
         }
     }
+    printf("Opening file: %s\n", filename);
 
     if(!filename){
-        frpintf(stderr, "No input file given!");
+        fprintf(stderr, "No input file given!\n");
         print_help(argv[0]);
         return 1;
     }
