@@ -6,3 +6,5 @@ A repository to work on systems level concpets focused on learning. Exploring lo
 - [stack-growth](./stack-growth/) : Figuring out which direction the stack in memory grows(Up or Down).
 - [File handling refresher](./FileHandling/) : A straightforward refresher to file handling in C.
 - [custom printf()](./custom-printf/) : A custom printf() function from scratch using variadic arguments and write().
+
+- [hexdump from scratch](./hexdump-II/) : `hexditch` a hexdump implementation in C with basic features. Supports ascii and colors.
