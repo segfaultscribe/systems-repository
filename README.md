@@ -8,3 +8,4 @@ A repository to work on systems level concpets focused on learning. Exploring lo
 - [custom printf()](./custom-printf/) : A custom printf() function from scratch using variadic arguments and write().
 
 - [hexdump from scratch](./hexdump-II/) : `hexditch` a hexdump implementation in C with basic features. Supports ascii and colors.
+- [slumber](./slumber/) : Honestly, a small program that wraps around nanosleep to create a seacond based sleep() function called `slumber`.
