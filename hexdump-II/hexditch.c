@@ -50,10 +50,6 @@ void print_help(const char *progname) {
 
 int main(int argc, char *argv[]){
     const char *filename = NULL;
-    // if (argc != 2) {
-    //     fprintf(stderr, "Usage: %s <filename>\n", argv[0]);
-    //     return 1;
-    // }
 
     for(int i=1;i<argc;++i){
         if(strcmp(argv[i], "--color") == 0){
@@ -69,7 +65,6 @@ int main(int argc, char *argv[]){
             return 1;
         }
     }
-    printf("Opening file: %s\n", filename);
 
     if(!filename){
         fprintf(stderr, "No input file given!\n");
