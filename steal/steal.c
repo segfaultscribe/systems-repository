@@ -9,8 +9,20 @@
 #define BUF_SIZE 4096
 #define PROGRESS_WIDTH 30
 
-void print_progress(){
+void print_progress(off_t stolen, off_t total){
+    float percent = (float)stolen / total;
+    int progress = (int)(percent * PROGRESS_WIDTH);
 
+    printf("\rCopying [");
+    for(int i=0; i<PROGRESS_WIDTH; ++i){   
+        if(i < progress){
+            printf("#");
+        } else {
+            printf("-");
+        } 
+    }
+    printf("] %3.0f%%", percent*100);
+    fflush(stdout);
 }
 
 int main(int argc, char *argv[]){
@@ -24,6 +36,7 @@ int main(int argc, char *argv[]){
     int ftct_fd = open(file_to_copy_to_path, O_WRONLY | O_CREAT | O_TRUNC , 0644);
     int ftcf_fd = open(file_to_copy_from_path, O_RDONLY);
 
+    printf("\n");
     struct stat st;
     if(stat(file_to_copy_from_path, &st) < 0){
         perror("Cannot get source file details");
@@ -44,7 +57,7 @@ int main(int argc, char *argv[]){
 
     char buffer[BUF_SIZE];
     ssize_t b_read, b_written;
-
+    off_t stolen = 0;
     while((b_read = read(ftcf_fd, buffer, BUF_SIZE)) > 0){
         b_written = write(ftct_fd, buffer, b_read);
 
@@ -54,6 +67,9 @@ int main(int argc, char *argv[]){
             close(ftct_fd);
             return 1;
         }
+
+        stolen += b_written;
+        print_progress(stolen, total_size);
     }
 
     if(b_read < 0) {
@@ -63,7 +79,7 @@ int main(int argc, char *argv[]){
     close(ftcf_fd);
     close(ftct_fd);
 
-    printf("Copying succesful!");
+    printf("\nCopying succesful!\n");
     return 0;
 
 }
