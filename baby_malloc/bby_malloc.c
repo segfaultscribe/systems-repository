@@ -2,18 +2,14 @@
 #include <stdlib.h>
 
 typedef struct block_meta {
-    size_t size;      
-    int free;         
-    struct block_meta* next; 
+    size_t size;
+    int free;
+    struct block_meta* next;
 } block_meta;
-
 
 #define POOL_SIZE 1024*1024
 
 static char memory_pool[POOL_SIZE];
-static size_t offset = 0;
-
-
 static block_meta* free_list = (block_meta*)memory_pool;
 
 void init_allocator() {
@@ -22,16 +18,15 @@ void init_allocator() {
     free_list->next = NULL;
 }
 
-
-void *internal_allocation(size_t size){
+void* internal_allocation(size_t size) {
     block_meta *curr = free_list;
-    size = (size + 7) & ~7;
+    size = (size + 7) & ~7; // byte alignment - look into this more
 
-    while(curr){
-        if(curr->free && curr->size > size){
+    while (curr) {
+        if (curr->free && curr->size >= size) {
             curr->free = 0;
 
-            if(curr->size > size + sizeof(block_meta)){
+            if (curr->size > size + sizeof(block_meta)) {
                 block_meta *next = (block_meta*)((char*)curr + sizeof(block_meta) + size);
 
                 next->size = curr->size - size - sizeof(block_meta);
@@ -46,7 +41,7 @@ void *internal_allocation(size_t size){
         }
         curr = curr->next;
     }
-    return NULL;
+    return NULL; 
 }
 
 void my_free(void* ptr) {
@@ -55,38 +50,70 @@ void my_free(void* ptr) {
     block_meta* block = (block_meta*)((char*)ptr - sizeof(block_meta));
     block->free = 1;
 
+    // combine with adjacent block if free
     if (block->next && block->next->free) {
         block->size += sizeof(block_meta) + block->next->size;
         block->next = block->next->next;
     }
 }
 
-void *bby_malloc(void *pointer, size_t size){
-    int check = offset + size < POOL_SIZE ? 1 : 0;
-
-    if(!check) return NULL;
-
-    void *ptr = &memory_pool[offset];
-    offset += size;
-    return ptr;
+int bby_malloc(void **out, size_t size) {
+    void* result = internal_allocation(size);
+    if (!result) {
+        *out = NULL;
+        return 0;
+    }
+    *out = result;
+    return 1;
 }
 
-int main(){
+void dump_allocator_state() {
+    block_meta* curr = free_list;
+    printf("\n===== Allocator State =====\n");
+
+    while (curr) {
+        printf("[ size=%zu, %s ] -> ",
+               curr->size,
+               curr->free ? "FREE" : "USED");
+        curr = curr->next;
+    }
+
+    printf("NULL\n==========================\n\n");
+}
+
+int main() {
     init_allocator();
 
-    printf("Allocator initialized with %d bytes\n", POOL_SIZE);
+    printf("Allocator initialized with %zu bytes\n", (size_t)POOL_SIZE);
+    dump_allocator_state();
 
-    void* p1 = internal_allocation(100);
-    printf("p1 = %p\n", p1);
+    void* p1;
+    if (bby_malloc(&p1, 100)) {
+        printf("Allocated p1 (100 bytes) at %p\n", p1);
+    } else {
+        printf("Failed to allocate p1\n");
+    }
+    dump_allocator_state();
 
-    void* p2 = internal_allocation(200);
-    printf("p2 = %p\n", p2);
+    void* p2;
+    if (bby_malloc(&p2, 200)) {
+        printf("Allocated p2 (200 bytes) at %p\n", p2);
+    } else {
+        printf("Failed to allocate p2\n");
+    }
+    dump_allocator_state();
 
     my_free(p1);
     printf("Freed p1\n");
+    dump_allocator_state();
 
-    void* p3 = internal_allocation(50);
-    printf("p3 = %p\n", p3);
+    void* p3;
+    if (bby_malloc(&p3, 50)) {
+        printf("Allocated p3 (50 bytes) at %p\n", p3);
+    } else {
+        printf("Failed to allocate p3\n");
+    }
+    dump_allocator_state();
 
     return 0;
 }
