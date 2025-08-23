@@ -19,7 +19,11 @@ Things you could look forward to in this implementation
 - On allocation, search for a block, split it, return pointer after header.
 - On free, mark block free, merge with next if possible.
 - A linked list of blocks tracks memory usage.
-
+### Setup
+```
+gcc bby_malloc.c -o bm
+./bm
+```
 ### Usage
 `safe`
 ```C
