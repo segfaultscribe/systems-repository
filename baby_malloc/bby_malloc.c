@@ -9,6 +9,8 @@ typedef struct block_meta {
 
 #define POOL_SIZE 1024*1024
 
+int isInitialized = 0;
+
 static char memory_pool[POOL_SIZE];
 static block_meta* free_list = (block_meta*)memory_pool;
 
@@ -16,11 +18,17 @@ void init_allocator() {
     free_list->size = POOL_SIZE - sizeof(block_meta);
     free_list->free = 1;
     free_list->next = NULL;
+    isInitialized = 1;
 }
 
 void* internal_allocation(size_t size) {
+
+    if(!isInitialized) init_allocator();
+
     block_meta *curr = free_list;
-    size = (size + 7) & ~7; // byte alignment - look into this more
+                            // byte alignment - look into this more. 
+    size = (size + 7) & ~7; //  memory accesses is faster and more efficient when data is aligned 
+                            // 8 bit for x86 
 
     while (curr) {
         if (curr->free && curr->size >= size) {
@@ -44,7 +52,7 @@ void* internal_allocation(size_t size) {
     return NULL; 
 }
 
-void my_free(void* ptr) {
+void bby_free(void* ptr) {
     if (!ptr) return;
 
     block_meta* block = (block_meta*)((char*)ptr - sizeof(block_meta));
@@ -69,7 +77,7 @@ int bby_malloc(void **out, size_t size) {
 
 void dump_allocator_state() {
     block_meta* curr = free_list;
-    printf("\n===== Allocator State =====\n");
+    printf("\n----Allocator State---- \n");
 
     while (curr) {
         printf("[ size=%zu, %s ] -> ",
@@ -78,11 +86,10 @@ void dump_allocator_state() {
         curr = curr->next;
     }
 
-    printf("NULL\n==========================\n\n");
+    printf("NULL\n--------------------\n\n");
 }
 
 int main() {
-    init_allocator();
 
     printf("Allocator initialized with %zu bytes\n", (size_t)POOL_SIZE);
     dump_allocator_state();
@@ -103,7 +110,7 @@ int main() {
     }
     dump_allocator_state();
 
-    my_free(p1);
+    bby_free(p1);
     printf("Freed p1\n");
     dump_allocator_state();
 
