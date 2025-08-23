@@ -1,6 +1,7 @@
-# About
+# Systems Repository: A playground for the curious
 
-A repository to work on systems level concpets focused on learning. Exploring low level CS concepts and coding them out to see how they actually work. This repo deals in all things low level - OS internals, C programming, Assembly, AI optimizations, CUDA etc. 
+A playground for systems programming. Dive into OS internals, C, assembly, memory allocators, and more through hands-on projects.
+Grows at a rate of one project or upgrade-to-existing-project per day, but as always is subject to the irregularities of human existence. 
 
 - [dynamic-array](./dynamic-array/) : Implementing dynamically growing arrays in C. No limit required in declaration unlike normal C arrays.
 - [stack-growth](./stack-growth/) : Figuring out which direction the stack in memory grows(Up or Down).
@@ -9,3 +10,5 @@ A repository to work on systems level concpets focused on learning. Exploring lo
 
 - [hexdump from scratch](./hexdump-II/) : `hexditch` a hexdump implementation in C with basic features. Supports ascii and colors.
 - [slumber](./slumber/) : Honestly, a small program that wraps around nanosleep to create a seacond based sleep() function called `slumber`.
+- [bump-allocator](./baby_malloc/) :  `baby_malloc()`, a simulation(?) of how memory management works under the hood. Good project to get started with memory. 
+- [steal](./steal/) : A custom `cp` function. Handles batch copying and is being maintained to handle multithreading.
