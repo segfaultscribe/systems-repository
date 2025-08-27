@@ -108,6 +108,19 @@ int main(){
                         }
                     break;
                 
+                case STATE_VALUE_TRUE:
+                case STATE_VALUE_FALSE:
+                case STATE_VALUE_NULL:
+                        val_buffer[val_index++] = ch;
+                        val_buffer[val_index] = '\0';
+                        if ((state == STATE_VALUE_TRUE && strcmp(val_buffer, "true") == 0) ||
+                            (state == STATE_VALUE_FALSE && strcmp(val_buffer, "false") == 0) ||
+                            (state == STATE_VALUE_NULL && strcmp(val_buffer, "null") == 0)) {
+                            printf("Key: %s, Value: %s\n", key_buffer, val_buffer);
+                            state = STATE_VALUE_END;
+                        }
+                    break;
+                
                 case STATE_VALUE_END:
                         if (ch == ","){
                             state = STATE_KEY_BEGIN;
