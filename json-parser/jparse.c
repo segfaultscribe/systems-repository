@@ -18,15 +18,46 @@ typedef enum {
     STATE_DONE
 } parser_state;
 
+char key_buffer[256];
+int key_index = 0;
+
+char val_buffer[256];
+int val_index = 0;
+
 int main(){
-    FILE *f;
+    FILE *f = fopen("temp.json", "r");
 
-    
-    f = fopen("temp.json", "r");
+    parser_state state = STATE_START;
 
-    char stream[512];
-    while(fgets(stream, sizeof stream, f)){
+    char line_buffer[512];
+    while(fgets(line_buffer, sizeof line_buffer, f)){
+        for(int i=0;line_buffer[i] != '\0';++i){
+            char ch = line_buffer[i];
 
+            switch(state){
+                case STATE_START:
+                        if (ch == '{') {
+                            state = STATE_KEY_BEGIN;
+                        }
+                    break;
+
+                case STATE_KEY_BEGIN:
+                        if (ch == '"'){
+                            key_index = 0;
+                            state = STATE_KEY;
+                        }
+                    break;
+                
+                case STATE_KEY:
+                        if (ch == '"'){
+                            key_buffer[key_index] = '\0';
+                            state = STATE_KEY_END;
+                        } else {
+                            key_buffer[key_index++] = ch;
+                        }
+                    break;
+            }
+        }
     }
     return 0;;
 }
