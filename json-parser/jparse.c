@@ -67,12 +67,23 @@ int main(){
                         if (ch == '"'){
                             val_index = 0;
                             state = STATE_VALUE_STRING;
+                        } else if (isdigit(ch) || ch == '-'){
+                            val_index = 0;
+                            val_buffer[val_index] = ch;
+                            state = STATE_VALUE_NUMBER;
+                        } else if (ch == 't'){
+                            val_index = 0;
+                            val_buffer[val_index] = ch;
+                            state = STATE_VALUE_TRUE;
+                        } else if (ch == 'f'){
+                            val_index = 0;
+                            val_buffer[val_index] = ch;
+                            state = STATE_VALUE_FALSE;
+                        } else if (ch == 'n'){
+                            val_index = 0;
+                            val_buffer[val_index] = ch;
+                            state = STATE_VALUE_NULL;
                         }
-                        // handle case for
-                        // number
-                        // true
-                        // false
-                        // NULL
                     break;
 
                 case STATE_VALUE_STRING:
@@ -86,6 +97,17 @@ int main(){
                         }
                     break;
                 
+                case STATE_VALUE_NUMBER:
+                        if(isdigit(ch) || ch == '.'){
+                            val_buffer[val_index] = ch;
+                        } else {
+                            val_buffer[val_index] = '\0';
+                            printf("Key: %s, Value: %s\n", key_buffer, val_buffer);
+                            state = STATE_VALUE_END;
+                            i--;  // go back since this character could be ',' or '}'
+                        }
+                    break;
+                
                 case STATE_VALUE_END:
                         if (ch == ","){
                             state = STATE_KEY_BEGIN;
@@ -93,8 +115,6 @@ int main(){
                             state = STATE_DONE;
                         }
                     break;
-
-
             }
         }
     }
