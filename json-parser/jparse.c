@@ -56,6 +56,45 @@ int main(){
                             key_buffer[key_index++] = ch;
                         }
                     break;
+                
+                case STATE_KEY_END:
+                        if (ch == ':'){
+                            state = STATE_VALUE_BEGIN;
+                        }
+                    break;
+                
+                case STATE_VALUE_BEGIN:
+                        if (ch == '"'){
+                            val_index = 0;
+                            state = STATE_VALUE_STRING;
+                        }
+                        // handle case for
+                        // number
+                        // true
+                        // false
+                        // NULL
+                    break;
+
+                case STATE_VALUE_STRING:
+                        if (ch == '"'){
+                            val_buffer[val_index] = '\0';
+                            printf("Key: %s, Value: %s\n", key_buffer, val_buffer);
+                            //print for now, can be modified to some other function
+                            state = STATE_VALUE_END;
+                        } else {
+                            val_buffer[val_index++] = ch;
+                        }
+                    break;
+                
+                case STATE_VALUE_END:
+                        if (ch == ","){
+                            state = STATE_KEY_BEGIN;
+                        } else if (ch == "}") {
+                            state = STATE_DONE;
+                        }
+                    break;
+
+
             }
         }
     }
