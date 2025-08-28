@@ -1,6 +1,6 @@
 # Lightweight JSON Parser in C
 
-This project is a minimalist, low-level JSON parser written in C, designed to help understand how JSON parsing works under the hood using a clean `deterministic finite automaton (DFA)` style `state machine` approach.
+A minimalist, low-level JSON parser written in C, designed to help understand how JSON parsing works under the hood using a clean `deterministic finite automaton (DFA)` style `state machine` approach.
 
 It parses JSON directly from a file stream character-by-character and outputs key-value pairs in a flat, streamable format. <br><br>Currently it prints to the console, you can modify the output as you require.
 
@@ -38,4 +38,3 @@ Key: tags[1], Value: user
 Key: tags[2], Value: editor
 Key: active, Value: true
 ```
-
