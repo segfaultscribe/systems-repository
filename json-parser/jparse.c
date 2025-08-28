@@ -24,6 +24,8 @@ int key_index = 0;
 char val_buffer[256];
 int val_index = 0;
 
+int literal_index;
+
 int main(){
     FILE *f = fopen("temp.json", "r");
 
@@ -64,6 +66,12 @@ int main(){
                     break;
                 
                 case STATE_VALUE_BEGIN:
+                        // we need to handle
+                        // 1. string
+                        // 2. digits
+                        // 3. true
+                        // 4. false
+                        // 5. null
                         if (ch == '"'){
                             val_index = 0;
                             state = STATE_VALUE_STRING;
@@ -90,7 +98,7 @@ int main(){
                         if (ch == '"'){
                             val_buffer[val_index] = '\0';
                             printf("Key: %s, Value: %s\n", key_buffer, val_buffer);
-                            //print for now, can be modified to some other function
+                            // TODO: modify this to some other function based on usecase
                             state = STATE_VALUE_END;
                         } else {
                             val_buffer[val_index++] = ch;
@@ -104,21 +112,55 @@ int main(){
                             val_buffer[val_index] = '\0';
                             printf("Key: %s, Value: %s\n", key_buffer, val_buffer);
                             state = STATE_VALUE_END;
-                            i--;  // go back since this character could be ',' or '}'
+                            i--;  // go back one character since this character could be ',' or '}'
                         }
                     break;
                 
                 case STATE_VALUE_TRUE:
+                        if( (literal_index == 0 && ch == 't') ||
+                            (literal_index == 0 && ch == 'r') ||
+                            (literal_index == 0 && ch == 'u') ||
+                            (literal_index == 0 && ch == 'e')){
+                                literal_index++;
+                                if (literal_index == 4) {
+                                    printf("Key: %s, Value: true\n", key_buffer);
+                                    state = STATE_VALUE_END;
+                                }
+                            } else {
+                                fprintf(stderr, "Error: Invalid character '%c' in 'true'\n", ch);
+                                return 1;
+                            }
+                        break;
                 case STATE_VALUE_FALSE:
+                            if ((literal_index == 0 && ch == 'f') ||
+                                (literal_index == 1 && ch == 'a') ||
+                                (literal_index == 2 && ch == 'l') ||
+                                (literal_index == 3 && ch == 's') ||
+                                (literal_index == 4 && ch == 'e')) {
+                                literal_index++;
+                                if (literal_index == 5) {
+                                    printf("Key: %s, Value: false\n", key_buffer);
+                                    state = STATE_VALUE_END;
+                                }
+                            } else {
+                                fprintf(stderr, "Error: Invalid character '%c' in 'false'\n", ch);
+                                return 1;
+                            }
+                        break;
                 case STATE_VALUE_NULL:
-                        val_buffer[val_index++] = ch;
-                        val_buffer[val_index] = '\0';
-                        if ((state == STATE_VALUE_TRUE && strcmp(val_buffer, "true") == 0) ||
-                            (state == STATE_VALUE_FALSE && strcmp(val_buffer, "false") == 0) ||
-                            (state == STATE_VALUE_NULL && strcmp(val_buffer, "null") == 0)) {
-                            printf("Key: %s, Value: %s\n", key_buffer, val_buffer);
-                            state = STATE_VALUE_END;
-                        }
+                            if ((literal_index == 0 && ch == 'n') ||
+                                (literal_index == 1 && ch == 'u') ||
+                                (literal_index == 2 && ch == 'l') ||
+                                (literal_index == 3 && ch == 'l')) {
+                                literal_index++;
+                                if (literal_index == 4) {
+                                    printf("Key: %s, Value: null\n", key_buffer);
+                                    state = STATE_VALUE_END;
+                                }
+                            } else {
+                                fprintf(stderr, "Error: Invalid character '%c' in 'null'\n", ch);
+                                return 1;
+                            }
                     break;
                 
                 case STATE_VALUE_END:
