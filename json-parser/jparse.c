@@ -30,6 +30,8 @@ int literal_index;
 char key_stack[10][256];
 int key_depth = 0;        
 
+int in_array = 0;
+int array_index = 0;
 
 void get_key(char *parent, char key_stack[][256], int depth, const char *key) {
     parent[0] = '\0';
@@ -91,6 +93,13 @@ int main(){
                         if (ch == '{'){
                             strcpy(key_stack[key_depth++], key_buffer);
                             state = STATE_KEY_BEGIN;
+                        } else if (ch == '['){
+                            in_array = 1;
+                            array_index = 0;
+
+                            strcpy(key_stack[key_depth++], key_buffer);
+
+                            state = STATE_VALUE_BEGIN;
                         } else if (ch == '"'){
                             val_index = 0;
                             state = STATE_VALUE_STRING;
@@ -114,7 +123,11 @@ int main(){
                         if (ch == '"'){
                             val_buffer[val_index] = '\0';
                             char full_key[512];
-                            get_key(full_key, key_stack, key_depth, key_buffer);
+                            if (in_array) {
+                                snprintf(full_key, sizeof full_key, "%s[%d]", key_stack[key_depth - 1], array_index++);
+                            } else {
+                                get_key(full_key, key_stack, key_depth, key_buffer);
+                            }
                             printf("Key: %s, Value: %s\n", full_key, val_buffer);
                             // TODO: modify this to some other function based on usecase
                             state = STATE_VALUE_END;
@@ -129,7 +142,12 @@ int main(){
                         } else {
                             val_buffer[val_index] = '\0';
                             char full_key[512];
-                            get_key(full_key, key_stack, key_depth, key_buffer);
+
+                            if (in_array) {
+                                snprintf(full_key, sizeof full_key, "%s[%d]", key_stack[key_depth - 1], array_index++);
+                            } else {
+                                get_key(full_key, key_stack, key_depth, key_buffer);
+}
                             if (strchr(val_buffer, '.') || strchr(val_buffer, 'e') || strchr(val_buffer, 'E')) {
                                 float f = strtof(val_buffer, NULL);
                                 printf("Key: %s, Value: %.2f\n", full_key, f);
@@ -150,7 +168,11 @@ int main(){
                                 literal_index++;
                                 if (literal_index == 4) {
                                     char full_key[512];
-                                    get_key(full_key, key_stack, key_depth, key_buffer);
+                                    if (in_array) {
+                                        snprintf(full_key, sizeof full_key, "%s[%d]", key_stack[key_depth - 1], array_index++);
+                                    } else {
+                                        get_key(full_key, key_stack, key_depth, key_buffer);
+                                    }
                                     printf("Key: %s, Value: true\n", full_key);
                                     state = STATE_VALUE_END;
                                 }
@@ -168,7 +190,11 @@ int main(){
                                 literal_index++;
                                 if (literal_index == 5) {
                                     char full_key[512];
-                                    get_key(full_key, key_stack, key_depth, key_buffer);
+                                    if (in_array) {
+                                        snprintf(full_key, sizeof full_key, "%s[%d]", key_stack[key_depth - 1], array_index++);
+                                    } else {
+                                        get_key(full_key, key_stack, key_depth, key_buffer);
+                                    }
                                     printf("Key: %s, Value: false\n", full_key);
                                     state = STATE_VALUE_END;
                                 }
@@ -185,7 +211,11 @@ int main(){
                                 literal_index++;
                                 if (literal_index == 4) {
                                     char full_key[512];
-                                    get_key(full_key, key_stack, key_depth, key_buffer);
+                                    if (in_array) {
+                                        snprintf(full_key, sizeof full_key, "%s[%d]", key_stack[key_depth - 1], array_index++);
+                                    } else {
+                                        get_key(full_key, key_stack, key_depth, key_buffer);
+                                    }
                                     printf("Key: %s, Value: null\n", full_key);
                                     state = STATE_VALUE_END;
                                 }
@@ -197,7 +227,12 @@ int main(){
                 
                 case STATE_VALUE_END:
                         if (ch == ','){
-                            state = STATE_KEY_BEGIN;
+                            if(in_array){
+                                state = STATE_VALUE_BEGIN;
+                            } else {
+                                state = STATE_KEY_BEGIN;
+                            }
+                            
                         } else if (ch == '}') {
                             if (key_depth > 0){
                                 key_depth--;
@@ -205,6 +240,10 @@ int main(){
                             } else {
                                 state = STATE_DONE;
                             }   
+                        } else if (ch == ']') {
+                            if (key_depth > 0) key_depth--; 
+                            in_array = 0;
+                            state = STATE_VALUE_END;
                         }
                     break;
             }

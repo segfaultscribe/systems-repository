@@ -5,5 +5,6 @@
   },
   "active": true,
   "daemon": false,
-  "Experience-in-years": 7.5
+  "Experience-in-years": 7.5,
+  "tags": ["admin", "user", "moderator"]
 }
