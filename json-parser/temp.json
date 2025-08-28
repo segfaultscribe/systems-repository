@@ -1,4 +1,9 @@
 {
-    "Name" : "sekai-no-o",
-    "Age" : "3210"
+  "user": {
+    "name": "Alice",
+    "age": "30"
+  },
+  "active": true,
+  "daemon": false,
+  "Experience-in-years": 7.5
 }

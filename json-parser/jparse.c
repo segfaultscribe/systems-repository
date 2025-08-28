@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include <ctype.h>
 
 
@@ -26,12 +27,27 @@ int val_index = 0;
 
 int literal_index;
 
+char key_stack[10][256];
+int key_depth = 0;        
+
+
+void get_key(char *parent, char key_stack[][256], int depth, const char *key) {
+    parent[0] = '\0';
+    for (int i = 0; i < depth; i++) {
+        strcat(parent, key_stack[i]);
+        strcat(parent, ".");
+    }
+    strcat(parent, key);
+}
+
 int main(){
     FILE *f = fopen("temp.json", "r");
 
     parser_state state = STATE_START;
 
     char line_buffer[512];
+    // pull this loop out of main maybe?
+    // or the switch?
     while(fgets(line_buffer, sizeof line_buffer, f)){
         for(int i=0;line_buffer[i] != '\0';++i){
             char ch = line_buffer[i];
@@ -72,24 +88,24 @@ int main(){
                         // 3. true
                         // 4. false
                         // 5. null
-                        if (ch == '"'){
+                        if (ch == '{'){
+                            strcpy(key_stack[key_depth++], key_buffer);
+                            state = STATE_KEY_BEGIN;
+                        } else if (ch == '"'){
                             val_index = 0;
                             state = STATE_VALUE_STRING;
-                        } else if (isdigit(ch) || ch == '-'){
+                        } else if (isdigit(ch) || ch == '-' || ch == '.'){
                             val_index = 0;
-                            val_buffer[val_index] = ch;
+                            val_buffer[val_index++] = ch;
                             state = STATE_VALUE_NUMBER;
                         } else if (ch == 't'){
-                            val_index = 0;
-                            val_buffer[val_index] = ch;
+                            literal_index = 1;
                             state = STATE_VALUE_TRUE;
                         } else if (ch == 'f'){
-                            val_index = 0;
-                            val_buffer[val_index] = ch;
+                            literal_index = 1;
                             state = STATE_VALUE_FALSE;
                         } else if (ch == 'n'){
-                            val_index = 0;
-                            val_buffer[val_index] = ch;
+                            literal_index = 1;
                             state = STATE_VALUE_NULL;
                         }
                     break;
@@ -97,7 +113,9 @@ int main(){
                 case STATE_VALUE_STRING:
                         if (ch == '"'){
                             val_buffer[val_index] = '\0';
-                            printf("Key: %s, Value: %s\n", key_buffer, val_buffer);
+                            char full_key[512];
+                            get_key(full_key, key_stack, key_depth, key_buffer);
+                            printf("Key: %s, Value: %s\n", full_key, val_buffer);
                             // TODO: modify this to some other function based on usecase
                             state = STATE_VALUE_END;
                         } else {
@@ -107,10 +125,18 @@ int main(){
                 
                 case STATE_VALUE_NUMBER:
                         if(isdigit(ch) || ch == '.'){
-                            val_buffer[val_index] = ch;
+                            val_buffer[val_index++] = ch;
                         } else {
                             val_buffer[val_index] = '\0';
-                            printf("Key: %s, Value: %s\n", key_buffer, val_buffer);
+                            char full_key[512];
+                            get_key(full_key, key_stack, key_depth, key_buffer);
+                            if (strchr(val_buffer, '.') || strchr(val_buffer, 'e') || strchr(val_buffer, 'E')) {
+                                float f = strtof(val_buffer, NULL);
+                                printf("Key: %s, Value: %.2f\n", full_key, f);
+                            } else {
+                                int i = atoi(val_buffer);
+                                printf("Key: %s, Value: %d\n", full_key, i);
+                            }
                             state = STATE_VALUE_END;
                             i--;  // go back one character since this character could be ',' or '}'
                         }
@@ -118,12 +144,14 @@ int main(){
                 
                 case STATE_VALUE_TRUE:
                         if( (literal_index == 0 && ch == 't') ||
-                            (literal_index == 0 && ch == 'r') ||
-                            (literal_index == 0 && ch == 'u') ||
-                            (literal_index == 0 && ch == 'e')){
+                            (literal_index == 1 && ch == 'r') ||
+                            (literal_index == 2 && ch == 'u') ||
+                            (literal_index == 3 && ch == 'e')){
                                 literal_index++;
                                 if (literal_index == 4) {
-                                    printf("Key: %s, Value: true\n", key_buffer);
+                                    char full_key[512];
+                                    get_key(full_key, key_stack, key_depth, key_buffer);
+                                    printf("Key: %s, Value: true\n", full_key);
                                     state = STATE_VALUE_END;
                                 }
                             } else {
@@ -139,7 +167,9 @@ int main(){
                                 (literal_index == 4 && ch == 'e')) {
                                 literal_index++;
                                 if (literal_index == 5) {
-                                    printf("Key: %s, Value: false\n", key_buffer);
+                                    char full_key[512];
+                                    get_key(full_key, key_stack, key_depth, key_buffer);
+                                    printf("Key: %s, Value: false\n", full_key);
                                     state = STATE_VALUE_END;
                                 }
                             } else {
@@ -154,7 +184,9 @@ int main(){
                                 (literal_index == 3 && ch == 'l')) {
                                 literal_index++;
                                 if (literal_index == 4) {
-                                    printf("Key: %s, Value: null\n", key_buffer);
+                                    char full_key[512];
+                                    get_key(full_key, key_stack, key_depth, key_buffer);
+                                    printf("Key: %s, Value: null\n", full_key);
                                     state = STATE_VALUE_END;
                                 }
                             } else {
@@ -164,10 +196,15 @@ int main(){
                     break;
                 
                 case STATE_VALUE_END:
-                        if (ch == ","){
+                        if (ch == ','){
                             state = STATE_KEY_BEGIN;
-                        } else if (ch == "}") {
-                            state = STATE_DONE;
+                        } else if (ch == '}') {
+                            if (key_depth > 0){
+                                key_depth--;
+                                state = STATE_VALUE_END;
+                            } else {
+                                state = STATE_DONE;
+                            }   
                         }
                     break;
             }
