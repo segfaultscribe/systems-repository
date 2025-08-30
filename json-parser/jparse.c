@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-
 typedef enum {
     STATE_START,
     STATE_KEY_BEGIN,
