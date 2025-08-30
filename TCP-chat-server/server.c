@@ -47,14 +47,52 @@ void *handle_client(void *arg){
     return NULL;
 }
 
-
-
-
-
-
-
 int main(){
+    int server_sock, client_sock;
+    struct sockaddr_in server, client;
+    socklen_t client_size = sizeof(client);
 
+    if((server_sock = socket(AF_INET, SOCK_STREAM, 0)) == -1){
+        perror("Socket failed");
+        return -1;
+    }
+
+    server.sin_family = AF_INET;
+    server.sin_addr.s_addr = INADDR_ANY;
+    server.sin_port = htons(PORT);
+
+    if(bind(server_sock, (struct sockaddr *)&server, sizeof(server)) < 0){
+        perror("[$] BIND FAILED!");
+        return -1;
+    }
+
+    if(listen(server_sock, MAX_CLIENTS) < 0){
+        perror("[$] LISTEN FAILED!");
+        return -1;
+    }
+
+    printf("Server is listening on port %d...\n", PORT);
+
+    while(1){
+        client_sock = accept(server_sock, (struct sockaddr *)&client, &client_size);
+        if(client_sock < 0){
+            perror("[$] ACCEPT FAILED!");
+            continue;
+        }
+
+        printf("Clinet connected\n");
+
+        client_data *data = malloc(sizeof(client_data));
+        data->client_socket = client_sock;
+        data->client_address = client;
+
+        pthread_t thread;
+        if(pthread_create(&thread, NULL, handle_client, (void *)data != 0)){
+            perror("Thread creation failed!");
+        }
+    }
+
+    close(server_sock)
     return 0;
 
 }
