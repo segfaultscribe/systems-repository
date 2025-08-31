@@ -1,13 +1,13 @@
 # 🖧 TCP Chat Server in C
 
-A simple multithreaded TCP chat server written in C using POSIX sockets and `pthread`. Each client that connects is handled in its own thread, allowing concurrent communication between multiple clients and the server.
+A simple multithreaded TCP chat server written in C using POSIX sockets and `pthread`. Each client that connects is handled in its own thread, allowing parallel communication between multiple clients and the server.
 
 
 - Multithreaded client handling using `pthread`
 - Simple echo logic (server sends back whatever the client sends)
-- Graceful handling of client disconnection
-- Written in pure C with minimal dependencies
-- Localhost testing and LAN-compatible
+- proper handling of client disconnection
+- minimal dependencies
+- Localhost testing and LAN-compatible 
 
 This one is a stepping stone to building a full scale http web server in C.
 ## 🛠️ Build Instructions
