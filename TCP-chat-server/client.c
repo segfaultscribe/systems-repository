@@ -18,11 +18,11 @@ int main(){
         return -1;
     }
     //make a buffer to hold messages
-    char buffer[BUFFER_SIZE]
+    char buffer[BUFFER_SIZE];
     //now we prepare the server address
     struct sockaddr_in server;
     server.sin_family = AF_INET;
-    server.sin_port = htons(PORT)
+    server.sin_port = htons(PORT);
 
     // inet_pton is used to convert a string - server IP - to binary in_addr
     if(inet_pton(AF_INET, SERVER_IP, &server.sin_addr)<=0 ){
@@ -43,7 +43,7 @@ int main(){
             break;
         }
 
-        int bytes_received = recv(sock, buffer, sizeof(buffer), 0)
+        int bytes_received = recv(sock, buffer, sizeof(buffer), 0);
         if(bytes_received <= 0){
             printf("Server disconnected or error!\n");
             break;

@@ -52,7 +52,7 @@ void *handle_client(void *arg){
         // infinite loop cause... server lol
 
         // clear the buffer, set each byte to 0 before each read
-        mmset(buffer, 0, sizeof(buffer));
+        memset(buffer, 0, sizeof(buffer));
         // recv is used to receive data from the socket
         // prototype :
         // ssize_t recv(int sockfd, void *buf, size_t len, int flags);
@@ -144,10 +144,10 @@ int main(){
         //initialize a new thread
         pthread_t thread;
         // create a thread for each client and call the handle_client function
-        if(pthread_create(&thread, NULL, handle_client, (void *)data != 0)){
+        if(pthread_create(&thread, NULL, handle_client, (void *)data) != 0){
             perror("Thread creation failed!");
         }
     }
-    close(server_sock)
+    close(server_sock);
     return 0;
 }
