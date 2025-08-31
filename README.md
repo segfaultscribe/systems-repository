@@ -8,7 +8,7 @@ Grows at a rate of one project or upgrade-to-existing-project per day, but as al
 - [File handling refresher](./FileHandling/) : A straightforward refresher to file handling in C.
 - [custom printf()](./custom-printf/) : A custom printf() function from scratch using variadic arguments and write().
 - [hexdump from scratch](./hexdump-II/) : `hexditch` a hexdump implementation in C with basic features. Supports ascii and colors.
-- [slumber](./slumber/) : Honestly, a small program that wraps around nanosleep to create a seacond based sleep() function called `slumber`.
+- [slumber](./slumber/) : A small program that wraps around nanosleep to create a seacond based sleep() function called `slumber`.
 - [bump-allocator](./baby_malloc/) :  `baby_malloc()`, a simulation(?) of how memory management works under the hood. Good project to get started with memory. 
 - [steal](./steal/) : A custom `cp` function. Handles batch copying and is being maintained to handle multithreading.
 - [SIMD-addition](./SIMD-addition/) : learn how to write `SIMD assembly`(add two 16 byte arrays) and connect it to C to improve performance.
