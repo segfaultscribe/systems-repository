@@ -14,4 +14,4 @@ Grows at a rate of one project or upgrade-to-existing-project per day, but as al
 - [SIMD-addition](./SIMD-addition/) : learn how to write `SIMD assembly`(add two 16 byte arrays) and connect it to C to improve performance.
 - [signal-logger](./signal-logger/) : log signals sent to the terminal, learn about signals in C
 - [json-parse](./json-parser/) : JSON parser written in C, designed to help understand how JSON parsing works under the hood using a `deterministic finite automaton (DFA)` style `state machine` approach. Learn state machines in C!
-- [TCP-chat-server](./TCP-chat-server/) : 🚧 Under construction.
+- [TCP-chat-server](./TCP-chat-server/) : multithreaded TCP chat server written in C using POSIX sockets and pthread.
