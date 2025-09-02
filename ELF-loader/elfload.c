@@ -6,6 +6,7 @@
 #include <inttypes.h>
 
 const char *ptype_to_str(uint32_t type);
+void print_flags(uint32_t flags);
 
 int main(int argc, char *argv[]){
     // standard argument validation
@@ -99,8 +100,10 @@ int main(int argc, char *argv[]){
             close(fd);
             return 1;
         }
-        printf("[%"PRIu16"] %s\tOffset: 0x%"PRIu64"\tVirtAddr: %"PRIu64"\tFileSize: %"PRIu64"\tMemSize: %"PRIu64"\tFlags: %"PRIu32"\n", 
-                i, ptype_to_str(elf_phdr.p_type), elf_phdr.p_offset, elf_phdr.p_vaddr, elf_phdr.p_filesz, elf_phdr.p_memsz, elf_phdr.p_flags);
+        printf("[%"PRIu16"] %s\tOffset: 0x%"PRIu64"\tVirtAddr: %"PRIu64"\tFileSize: %"PRIu64"\tMemSize: %"PRIu64"\t", 
+                i, ptype_to_str(elf_phdr.p_type), elf_phdr.p_offset, elf_phdr.p_vaddr, elf_phdr.p_filesz, elf_phdr.p_memsz);
+        print_flags(elf_phdr.p_flags);
+        printf("\n");
     }
 
     close(fd);
@@ -121,4 +124,11 @@ const char *ptype_to_str(uint32_t type) {
         case PT_TLS:     return "TLS";
         default:         return "UNKNOWN";
     }
+}
+
+void print_flags(uint32_t flags) {
+    printf("Flags: %c%c%c",
+        (flags & PF_R) ? 'R' : '-',
+        (flags & PF_W) ? 'W' : '-',
+        (flags & PF_X) ? 'E' : '-');
 }
