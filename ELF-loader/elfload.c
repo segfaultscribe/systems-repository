@@ -81,6 +81,26 @@ int main(int argc, char *argv[]){
     printf("Program header offset: %" PRIu64 "\n", elf_headr.e_phoff);
     printf("Section header offset: %" PRIu64 "\n", elf_headr.e_shoff);
 
+    uint16_t n_programs = elf_headr.e_phnum;
+    uint16_t pg_size = elf_headr.e_phentsize;
+    // now we move onto program headers
+    // program header table tells the loader what parts of the file 
+    // need to be mapped into memory and with what permissions.
+    Elf64_Phdr elf_phdr;
+    lseek(fd, elf_headr.e_phoff, SEEK_SET);
+    for(uint16_t i=0;i<n_programs;++i){
+        // read each program header
+        ssize_t bytes_read = read(fd, &elf_phdr, sizeof elf_phdr);
+        if(bytes_read != sizeof elf_phdr){
+            perror("read");
+            close(fd);
+            return 1;
+        }
+        
+        printf("[%"PRIu16"] %"PRIu32"\tOffset: 0x%"PRIu64"\tVirtAddr: %"PRIu64"\tFileSize: %"PRIu64"\tMemSize: %"PRIu64"\tFlags: %"PRIu32"\n", 
+                i, elf_phdr.p_type, elf_phdr.p_offset, elf_phdr.p_vaddr, elf_phdr.p_filesz, elf_phdr.p_memsz, elf_phdr.p_flags);
+    }
+
     close(fd);
     return 0;
 
