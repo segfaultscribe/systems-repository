@@ -114,8 +114,6 @@ int main(int argc, char *argv[]){
         close(fd);
         return 1;
     }
-
-
     printf("\n");
     printf("Program entry point: 0x%" PRIx64 "\n", elf_headr.e_entry);
     printf("Program header offset: %" PRIu64 "\n", elf_headr.e_phoff);
@@ -142,6 +140,24 @@ int main(int argc, char *argv[]){
                 i, ptype_to_str(elf_phdr.p_type), elf_phdr.p_offset, elf_phdr.p_vaddr, elf_phdr.p_filesz, elf_phdr.p_memsz);
         print_flags(elf_phdr.p_flags);
         printf("\n");
+
+        // prepare to load
+        // reading all headers into an array
+        Elf64_Phdr *phdrs = malloc(sizeof Elf64_Phdr * elf_headr.e_phnum);
+        if(!phdrs){
+            perror("malloc");
+            close(fd);
+            return 1;
+        }
+        // position the file descriptor at the start
+        lseek(fd, elf_headr.e_phnum, SEEK_SET);
+        ssize_t bytes_read = read(fd, phdrs, sizeof(Elf64_Phdr) * elf_headr.e_phnum);
+        if (bytes_read != sizeof(Elf64_Phdr) * elf_headr.e_phnum) {
+            perror("read");
+            free(phdrs);
+            close(fd);
+            return 1;
+        }
     }
     close(fd);
     return 0;
