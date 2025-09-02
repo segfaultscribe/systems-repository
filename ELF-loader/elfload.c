@@ -79,6 +79,43 @@ int main(int argc, char *argv[]){
         close(fd);
         return 1;
     }
+
+    // Sanity checks
+    switch(elf_headr){
+        case ET_EXEC: printf("Type: Executable file\n"); break;
+        case ET_DYN:  printf("Type: Shared object (so/dylib)\n"); break;
+        case ET_REL:  printf("Type: Relocatable object file\n"); break;
+        default:      printf("Type: Unknown (%u)\n", elf_headr.e_type); break;
+    }
+
+    // check system architecture
+    if(elf_headr.e_machine != EM_X86_64){
+        fprintf(stderr, "Unsupported architecture: %u\n", elf_headr.e_machine);
+        close(fd);
+        return 1;
+    } else {
+        printf("Machine: x86_64\n");
+    }
+    // check version
+    if (elf_headr.e_version != EV_CURRENT) {
+        fprintf(stderr, "Invalid ELF version\n");
+        close(fd);
+        return 1;
+    }
+    // check program headers
+    if(elf_headr.e_phnum == 0){
+        fprintf(stderr, "No program headers found!");
+        close(fd);
+        return 1;
+    }
+    // check program header size
+    if (elf_headr.e_phentsize != sizeof(Elf64_Phdr)) {
+        fprintf(stderr, "Unexpected program header entry size\n");
+        close(fd);
+        return 1;
+    }
+
+
     printf("\n");
     printf("Program entry point: 0x%" PRIx64 "\n", elf_headr.e_entry);
     printf("Program header offset: %" PRIu64 "\n", elf_headr.e_phoff);
@@ -86,7 +123,7 @@ int main(int argc, char *argv[]){
     printf("\n");
 
     uint16_t n_programs = elf_headr.e_phnum;
-    uint16_t pg_size = elf_headr.e_phentsize;
+    // uint16_t pg_size = elf_headr.e_phentsize;
     // now we move onto program headers
     // program header table tells the loader what parts of the file 
     // need to be mapped into memory and with what permissions.
@@ -100,29 +137,31 @@ int main(int argc, char *argv[]){
             close(fd);
             return 1;
         }
+        //printout each header part and then the flags 
         printf("[%"PRIu16"] %s\tOffset: 0x%"PRIu64"\tVirtAddr: %"PRIu64"\tFileSize: %"PRIu64"\tMemSize: %"PRIu64"\t", 
                 i, ptype_to_str(elf_phdr.p_type), elf_phdr.p_offset, elf_phdr.p_vaddr, elf_phdr.p_filesz, elf_phdr.p_memsz);
         print_flags(elf_phdr.p_flags);
         printf("\n");
     }
-
     close(fd);
     return 0;
-
-
 }
 
 const char *ptype_to_str(uint32_t type) {
     switch(type) {
-        case PT_NULL:    return "NULL";
-        case PT_LOAD:    return "LOAD";
-        case PT_DYNAMIC: return "DYNAMIC";
-        case PT_INTERP:  return "INTERP";
-        case PT_NOTE:    return "NOTE";
-        case PT_SHLIB:   return "SHLIB";
-        case PT_PHDR:    return "PHDR";
-        case PT_TLS:     return "TLS";
-        default:         return "UNKNOWN";
+        case PT_NULL:           return "NULL";
+        case PT_LOAD:           return "LOAD";
+        case PT_DYNAMIC:        return "DYNAMIC";
+        case PT_INTERP:         return "INTERP";
+        case PT_NOTE:           return "NOTE";
+        case PT_SHLIB:          return "SHLIB";
+        case PT_PHDR:           return "PHDR";
+        case PT_TLS:            return "TLS";
+        case PT_GNU_EH_FRAME:   return "GNU_EH_FRAME";
+        case PT_GNU_STACK:      return "GNU_STACK";
+        case PT_GNU_RELRO:      return "GNU_RELRO";
+        case PT_GNU_PROPERTY:   return "GNU_PROPERTY";
+        default:                return "UNKNOWN";
     }
 }
 
