@@ -5,6 +5,8 @@
 #include <elf.h>
 #include <inttypes.h>
 
+const char *ptype_to_str(uint32_t type);
+
 int main(int argc, char *argv[]){
     // standard argument validation
     if (argc < 2) {
@@ -80,6 +82,7 @@ int main(int argc, char *argv[]){
     printf("Program entry point: 0x%" PRIx64 "\n", elf_headr.e_entry);
     printf("Program header offset: %" PRIu64 "\n", elf_headr.e_phoff);
     printf("Section header offset: %" PRIu64 "\n", elf_headr.e_shoff);
+    printf("\n");
 
     uint16_t n_programs = elf_headr.e_phnum;
     uint16_t pg_size = elf_headr.e_phentsize;
@@ -96,13 +99,26 @@ int main(int argc, char *argv[]){
             close(fd);
             return 1;
         }
-        
-        printf("[%"PRIu16"] %"PRIu32"\tOffset: 0x%"PRIu64"\tVirtAddr: %"PRIu64"\tFileSize: %"PRIu64"\tMemSize: %"PRIu64"\tFlags: %"PRIu32"\n", 
-                i, elf_phdr.p_type, elf_phdr.p_offset, elf_phdr.p_vaddr, elf_phdr.p_filesz, elf_phdr.p_memsz, elf_phdr.p_flags);
+        printf("[%"PRIu16"] %s\tOffset: 0x%"PRIu64"\tVirtAddr: %"PRIu64"\tFileSize: %"PRIu64"\tMemSize: %"PRIu64"\tFlags: %"PRIu32"\n", 
+                i, ptype_to_str(elf_phdr.p_type), elf_phdr.p_offset, elf_phdr.p_vaddr, elf_phdr.p_filesz, elf_phdr.p_memsz, elf_phdr.p_flags);
     }
 
     close(fd);
     return 0;
 
 
+}
+
+const char *ptype_to_str(uint32_t type) {
+    switch(type) {
+        case PT_NULL:    return "NULL";
+        case PT_LOAD:    return "LOAD";
+        case PT_DYNAMIC: return "DYNAMIC";
+        case PT_INTERP:  return "INTERP";
+        case PT_NOTE:    return "NOTE";
+        case PT_SHLIB:   return "SHLIB";
+        case PT_PHDR:    return "PHDR";
+        case PT_TLS:     return "TLS";
+        default:         return "UNKNOWN";
+    }
 }
