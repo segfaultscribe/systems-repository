@@ -3,6 +3,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <elf.h>
+#include <inttypes.h>
 
 int main(int argc, char *argv[]){
     // standard argument validation
@@ -65,13 +66,21 @@ int main(int argc, char *argv[]){
     } else {
         printf("ENDIANNESS: Invalid Endian!");
     }
-    // Elf64_Ehdr elf_header;
-    // ssize_t bytes_read = read(fd, &elf_header, sizeof(Elf64_Ehdr));
-    // if (bytes_read != sizeof(Elf64_Ehdr)) {
-    //     perror("read");
-    //     close(fd);
-    //     return 1;
-    // }
+    //Now that we've validated the ELF file
+    // we need to read the entire ELF file header into memory and print some of its key fields.
+    Elf64_Ehdr elf_headr;
+    lseek(fd, 0, SEEK_SET); // go back the 16 bytes we read, we're reading the entire header into elf_header now
+    bytes_read = read(fd, &elf_headr, sizeof elf_headr);
+    if(bytes_read != sizeof elf_headr){
+        perror("read");
+        close(fd);
+        return 1;
+    }
+    printf("\n");
+    printf("Program entry point: 0x%" PRIx64 "\n", elf_headr.e_entry);
+    printf("Program header offset: %" PRIu64 "\n", elf_headr.e_phoff);
+    printf("Section header offset: %" PRIu64 "\n", elf_headr.e_shoff);
+
     close(fd);
     return 0;
 
