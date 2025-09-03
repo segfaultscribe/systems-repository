@@ -209,7 +209,6 @@ int main(int argc, char *argv[]){
                     printf("  (extra %" PRIu64 " bytes should be zero-initialized)\n",
                         load.p_memsz - load.p_filesz);
                 }
-
                 // allocate memory for segment
                 void *segment = malloc(load.p_memsz);
                 if (!segment) {
@@ -218,7 +217,6 @@ int main(int argc, char *argv[]){
                     close(fd);
                     return 1;
                 }
-
                 // read file data into buffer
                 lseek(fd, load.p_offset, SEEK_SET);
                 ssize_t n = read(fd, segment, load.p_filesz);
@@ -229,13 +227,11 @@ int main(int argc, char *argv[]){
                     close(fd);
                     return 1;
                 }
-
                 // zero-fill the rest (bss section)
                 if (load.p_memsz > load.p_filesz) {
                     memset((char*)segment + load.p_filesz, 0,
                         load.p_memsz - load.p_filesz);
                 }
-
                 // debug info
                 printf("  -> Allocated %zu bytes at host address %p\n\n",
                     (size_t)load.p_memsz, segment);
