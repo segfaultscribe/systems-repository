@@ -190,7 +190,7 @@ int main(int argc, char *argv[]){
         // simulate loading by printing for only LOAD segments
         LoadedSegment load_segments[has_load];
         int loadIdx = 0;
-
+        printf("\n---LOAD SEGMENTS---\n");
         for (int i = 0; i < elf_headr.e_phnum; ++i) {
             Elf64_Phdr load = phdrs[i];
 
@@ -248,15 +248,16 @@ int main(int argc, char *argv[]){
 
         void *entry_host = vaddr_to_host(load_segments, loadIdx, elf_headr.e_entry);
         if (entry_host) {
-            printf("Entry point virtual: 0x%lx maps to host: %p\n",
-                (unsigned long)elf_headr.e_entry, entry_host);
+            printf("Entry point virtual: 0x%"PRIu64" maps to host: %p\n",
+                (uint64_t)elf_headr.e_entry, entry_host);
         } else {
-            printf("Entry point 0x%lx is not in any loaded segment!\n",
-                (unsigned long)elf_headr.e_entry);
+            printf("Entry point 0x%"PRIu64" is not in any loaded segment!\n",
+                (uint64_t)elf_headr.e_entry);
         }
 
         // Pick one segment to test
         // temporary tests
+        printf("\n");
         LoadedSegment seg = load_segments[0];
 
         // Test some addresses inside it
@@ -272,17 +273,23 @@ int main(int argc, char *argv[]){
         void *host4 = vaddr_to_host(load_segments, loadIdx, test_vaddr4);
 
         // Print results
-        printf("Test1 (start)   vaddr=0x%lx -> host=%p\n", (unsigned long)test_vaddr1, host1);
-        printf("Test2 (+16)     vaddr=0x%lx -> host=%p\n", (unsigned long)test_vaddr2, host2);
-        printf("Test3 (last)    vaddr=0x%lx -> host=%p\n", (unsigned long)test_vaddr3, host3);
-        printf("Test4 (outside) vaddr=0x%lx -> host=%p\n", (unsigned long)test_vaddr4, host4);
+        printf("Test1 (start)   vaddr=0x%"PRIu64" -> host=%p\n", (uint64_t)test_vaddr1, host1);
+        printf("Test2 (+16)     vaddr=0x%"PRIu64" -> host=%p\n", (uint64_t)test_vaddr2, host2);
+        printf("Test3 (last)    vaddr=0x%"PRIu64" -> host=%p\n", (uint64_t)test_vaddr3, host3);
+        printf("Test4 (outside) vaddr=0x%"PRIu64" -> host=%p\n", (uint64_t)test_vaddr4, host4);
 
-
+        //free stuff, close stuff
+        for(int i=0;i<loadIdx;++i){
+            free(load_segments[i].host_addr);
+        }
         free(phdrs);
         close(fd);
+        printf("\nLoaded %d segments. Adios now!\n", loadIdx);
+        printf("Loader finished successfully\n");
         return 0;
     }
 
+// --- HELPERS --- 
 const char *ptype_to_str(uint32_t type) {
     switch(type) {
         case PT_NULL:           return "NULL";
@@ -305,7 +312,7 @@ void print_flags(uint32_t flags) {
     printf("Flags: %c%c%c",
         (flags & PF_R) ? 'R' : '-',
         (flags & PF_W) ? 'W' : '-',
-        (flags & PF_X) ? 'E' : '-');
+        (flags & PF_X) ? 'X' : '-');
 }
 
 void* vaddr_to_host(LoadedSegment *segments, int n, Elf64_Addr vaddr) {
