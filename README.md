@@ -15,4 +15,4 @@ Grows at a rate of one project or upgrade-to-existing-project per day, but as al
 - [signal-logger](./signal-logger/) : log signals sent to the terminal, learn about signals in C
 - [json-parse](./json-parser/) : JSON parser written in C, designed to help understand how JSON parsing works under the hood using a `deterministic finite automaton (DFA)` style `state machine` approach. Learn state machines in C!
 - [TCP-chat-server](./TCP-chat-server/) : multithreaded TCP chat server written in C using POSIX sockets and pthread.
-- [ELF-loader](./ELF-loader/) : A minimal `Executable and linking format (ELF) loader` to peek under the hood of how `execve` and `dynamic linking` work. 
+- [ELF-loader](./ELF-loader/) : A minimal `Executable and linking format (ELF) loader` to peek under the hood of how the OS loads programs (is a wee bit heavy project in comparison).
