@@ -81,7 +81,7 @@ int main(int argc, char *argv[]){
     }
 
     // Sanity checks
-    switch(elf_headr){
+    switch(elf_headr.e_type){
         case ET_EXEC: printf("Type: Executable file\n"); break;
         case ET_DYN:  printf("Type: Shared object (so/dylib)\n"); break;
         case ET_REL:  printf("Type: Relocatable object file\n"); break;
@@ -140,28 +140,72 @@ int main(int argc, char *argv[]){
                 i, ptype_to_str(elf_phdr.p_type), elf_phdr.p_offset, elf_phdr.p_vaddr, elf_phdr.p_filesz, elf_phdr.p_memsz);
         print_flags(elf_phdr.p_flags);
         printf("\n");
+    }
 
         // prepare to load
         // reading all headers into an array
-        Elf64_Phdr *phdrs = malloc(sizeof Elf64_Phdr * elf_headr.e_phnum);
+        Elf64_Phdr *phdrs = malloc(sizeof(Elf64_Phdr) * elf_headr.e_phnum);
         if(!phdrs){
             perror("malloc");
             close(fd);
             return 1;
         }
         // position the file descriptor at the start
-        lseek(fd, elf_headr.e_phnum, SEEK_SET);
-        ssize_t bytes_read = read(fd, phdrs, sizeof(Elf64_Phdr) * elf_headr.e_phnum);
+        lseek(fd, elf_headr.e_phoff, SEEK_SET);
+        bytes_read = read(fd, phdrs, sizeof(Elf64_Phdr) * elf_headr.e_phnum);
         if (bytes_read != sizeof(Elf64_Phdr) * elf_headr.e_phnum) {
             perror("read");
             free(phdrs);
             close(fd);
             return 1;
         }
+
+        // check PT_LOAD segments
+        // WHY?
+        // The loader (only) cares about PT_LOAD, because those are the segments that make the program runnable. 
+        // If an ELF has no PT_LOAD, there’s literally nothing to put in memory, not an executable in the normal sense.
+
+        int has_load = 0;
+        for(int i=0;i<elf_headr.e_phnum;++i){
+            if(phdrs[i].p_type == PT_LOAD){
+                ++has_load;
+            }
+        }
+        if (!has_load) {
+            fprintf(stderr, "No loadable segments in ELF!\n");
+            free(phdrs);
+            close(fd);
+            return 1;
+        }
+        // simulate loading by printing for only LOAD segments
+        for(int i=0;i<elf_headr.e_phnum;++i){
+            Elf64_Phdr load = phdrs[i];
+
+            if(load.p_type == PT_LOAD){
+                printf("LOAD SEGMENT:\n");
+                printf("  VirtAddr: 0x%016" PRIx64 "\n", load.p_vaddr);
+                printf("  FileOffset: 0x%016" PRIx64 "\n", load.p_offset);
+                printf("  FileSize: %" PRIu64 "\n", load.p_filesz);
+                printf("  MemSize : %" PRIu64 "\n", load.p_memsz);
+
+                printf("  Flags: %c%c%c\n",
+                    (load.p_flags & PF_R) ? 'R' : '-',
+                    (load.p_flags & PF_W) ? 'W' : '-',
+                    (load.p_flags & PF_X) ? 'X' : '-');
+
+                if (load.p_memsz > load.p_filesz) {
+                    printf("  (extra %" PRIu64 " bytes should be zero-initialized)\n",
+                        load.p_memsz - load.p_filesz);
+                }
+                printf("\n");
+            }
+        }
+        free(phdrs);
+        close(fd);
+        return 0;
     }
-    close(fd);
-    return 0;
-}
+
+
 
 const char *ptype_to_str(uint32_t type) {
     switch(type) {
