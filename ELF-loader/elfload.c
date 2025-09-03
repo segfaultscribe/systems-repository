@@ -2,11 +2,21 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #include <elf.h>
 #include <inttypes.h>
 
+// struct to hold PT_LOAD segments
+typedef struct {
+    void *host_addr;       
+    Elf64_Addr virt_addr;  
+    size_t size;           
+    uint32_t flags;        
+} LoadedSegment;
+
 const char *ptype_to_str(uint32_t type);
 void print_flags(uint32_t flags);
+void* vaddr_to_host(LoadedSegment *segments, int n, Elf64_Addr vaddr);
 
 int main(int argc, char *argv[]){
     // standard argument validation
@@ -165,7 +175,7 @@ int main(int argc, char *argv[]){
         // The loader (only) cares about PT_LOAD, because those are the segments that make the program runnable. 
         // If an ELF has no PT_LOAD, there’s literally nothing to put in memory, not an executable in the normal sense.
 
-        int has_load = 0;
+        int has_load = 0; //has_load verifies if the elf file has load segments and alos tracks how many
         for(int i=0;i<elf_headr.e_phnum;++i){
             if(phdrs[i].p_type == PT_LOAD){
                 ++has_load;
@@ -178,17 +188,19 @@ int main(int argc, char *argv[]){
             return 1;
         }
         // simulate loading by printing for only LOAD segments
-        for(int i=0;i<elf_headr.e_phnum;++i){
+        LoadedSegment load_segments[has_load];
+        int loadIdx = 0;
+
+        for (int i = 0; i < elf_headr.e_phnum; ++i) {
             Elf64_Phdr load = phdrs[i];
 
-            if(load.p_type == PT_LOAD){
+            if (load.p_type == PT_LOAD) {
                 printf("LOAD SEGMENT:\n");
-                printf("  VirtAddr: 0x%016" PRIx64 "\n", load.p_vaddr);
+                printf("  VirtAddr : 0x%016" PRIx64 "\n", load.p_vaddr);
                 printf("  FileOffset: 0x%016" PRIx64 "\n", load.p_offset);
-                printf("  FileSize: %" PRIu64 "\n", load.p_filesz);
-                printf("  MemSize : %" PRIu64 "\n", load.p_memsz);
-
-                printf("  Flags: %c%c%c\n",
+                printf("  FileSize : %" PRIu64 "\n", load.p_filesz);
+                printf("  MemSize  : %" PRIu64 "\n", load.p_memsz);
+                printf("  Flags    : %c%c%c\n",
                     (load.p_flags & PF_R) ? 'R' : '-',
                     (load.p_flags & PF_W) ? 'W' : '-',
                     (load.p_flags & PF_X) ? 'X' : '-');
@@ -197,21 +209,20 @@ int main(int argc, char *argv[]){
                     printf("  (extra %" PRIu64 " bytes should be zero-initialized)\n",
                         load.p_memsz - load.p_filesz);
                 }
-                printf("\n");
 
-                // allocating memory for this segment
+                // allocate memory for segment
                 void *segment = malloc(load.p_memsz);
-                if(!segment){
+                if (!segment) {
                     perror("malloc");
                     free(phdrs);
                     close(fd);
                     return 1;
                 }
 
-                // reading file data inot the buffer
+                // read file data into buffer
                 lseek(fd, load.p_offset, SEEK_SET);
-                ssite_t n = read(fd, segment, load.p_filesz);
-                if (n != load.p_filesz) {
+                ssize_t n = read(fd, segment, load.p_filesz);
+                if (n < 0) {
                     perror("read segment");
                     free(segment);
                     free(phdrs);
@@ -219,32 +230,54 @@ int main(int argc, char *argv[]){
                     return 1;
                 }
 
-                //set unused space to 0
+                // zero-fill the rest (bss section)
                 if (load.p_memsz > load.p_filesz) {
                     memset((char*)segment + load.p_filesz, 0,
                         load.p_memsz - load.p_filesz);
                 }
 
-                printf("  -> Allocated %zu bytes at host address %p\n",
+                // debug info
+                printf("  -> Allocated %zu bytes at host address %p\n\n",
                     (size_t)load.p_memsz, segment);
 
-                printf("  Flags   : %c%c%c\n",
-                    (load.p_flags & PF_R) ? 'R' : '-',
-                    (load.p_flags & PF_W) ? 'W' : '-',
-                    (load.p_flags & PF_X) ? 'X' : '-');
-
-                if (load.p_memsz > load.p_filesz) {
-                    printf("  (extra %" PRIu64 " bytes zero-initialized)\n",
-                        load.p_memsz - load.p_filesz);
-                }
-                printf("\n");
+                // save to our simulated "process image"
+                LoadedSegment newSegment = {segment, load.p_vaddr, load.p_memsz, load.p_flags};
+                load_segments[loadIdx++] = newSegment;
             }
         }
 
-
-        for(int i=0;i<elf_headr.e_phnum;++i){
-            
+        void *entry_host = vaddr_to_host(load_segments, loadIdx, elf_headr.e_entry);
+        if (entry_host) {
+            printf("Entry point virtual: 0x%lx maps to host: %p\n",
+                (unsigned long)elf_headr.e_entry, entry_host);
+        } else {
+            printf("Entry point 0x%lx is not in any loaded segment!\n",
+                (unsigned long)elf_headr.e_entry);
         }
+
+        // Pick one segment to test
+        // temporary tests
+        LoadedSegment seg = load_segments[0];
+
+        // Test some addresses inside it
+        Elf64_Addr test_vaddr1 = seg.virt_addr;               // start of segment
+        Elf64_Addr test_vaddr2 = seg.virt_addr + 0x10;        // +16 bytes
+        Elf64_Addr test_vaddr3 = seg.virt_addr + seg.size-1;  // last byte
+        Elf64_Addr test_vaddr4 = seg.virt_addr + seg.size;    // just outside (should fail)
+
+        // Try translating
+        void *host1 = vaddr_to_host(load_segments, loadIdx, test_vaddr1);
+        void *host2 = vaddr_to_host(load_segments, loadIdx, test_vaddr2);
+        void *host3 = vaddr_to_host(load_segments, loadIdx, test_vaddr3);
+        void *host4 = vaddr_to_host(load_segments, loadIdx, test_vaddr4);
+
+        // Print results
+        printf("Test1 (start)   vaddr=0x%lx -> host=%p\n", (unsigned long)test_vaddr1, host1);
+        printf("Test2 (+16)     vaddr=0x%lx -> host=%p\n", (unsigned long)test_vaddr2, host2);
+        printf("Test3 (last)    vaddr=0x%lx -> host=%p\n", (unsigned long)test_vaddr3, host3);
+        printf("Test4 (outside) vaddr=0x%lx -> host=%p\n", (unsigned long)test_vaddr4, host4);
+
+
         free(phdrs);
         close(fd);
         return 0;
@@ -273,4 +306,17 @@ void print_flags(uint32_t flags) {
         (flags & PF_R) ? 'R' : '-',
         (flags & PF_W) ? 'W' : '-',
         (flags & PF_X) ? 'E' : '-');
+}
+
+void* vaddr_to_host(LoadedSegment *segments, int n, Elf64_Addr vaddr) {
+    for (int i = 0; i < n; i++) {
+        Elf64_Addr start = segments[i].virt_addr;
+        Elf64_Addr end   = start + segments[i].size;
+
+        if (vaddr >= start && vaddr < end) {
+            size_t offset = vaddr - start;
+            return (char*)segments[i].host_addr + offset;
+        }
+    }
+    return NULL; // not in any segment
 }
