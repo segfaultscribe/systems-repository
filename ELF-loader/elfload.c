@@ -198,14 +198,57 @@ int main(int argc, char *argv[]){
                         load.p_memsz - load.p_filesz);
                 }
                 printf("\n");
+
+                // allocating memory for this segment
+                void *segment = malloc(load.p_memsz);
+                if(!segment){
+                    perror("malloc");
+                    free(phdrs);
+                    close(fd);
+                    return 1;
+                }
+
+                // reading file data inot the buffer
+                lseek(fd, load.p_offset, SEEK_SET);
+                ssite_t n = read(fd, segment, load.p_filesz);
+                if (n != load.p_filesz) {
+                    perror("read segment");
+                    free(segment);
+                    free(phdrs);
+                    close(fd);
+                    return 1;
+                }
+
+                //set unused space to 0
+                if (load.p_memsz > load.p_filesz) {
+                    memset((char*)segment + load.p_filesz, 0,
+                        load.p_memsz - load.p_filesz);
+                }
+
+                printf("  -> Allocated %zu bytes at host address %p\n",
+                    (size_t)load.p_memsz, segment);
+
+                printf("  Flags   : %c%c%c\n",
+                    (load.p_flags & PF_R) ? 'R' : '-',
+                    (load.p_flags & PF_W) ? 'W' : '-',
+                    (load.p_flags & PF_X) ? 'X' : '-');
+
+                if (load.p_memsz > load.p_filesz) {
+                    printf("  (extra %" PRIu64 " bytes zero-initialized)\n",
+                        load.p_memsz - load.p_filesz);
+                }
+                printf("\n");
             }
+        }
+
+
+        for(int i=0;i<elf_headr.e_phnum;++i){
+            
         }
         free(phdrs);
         close(fd);
         return 0;
     }
-
-
 
 const char *ptype_to_str(uint32_t type) {
     switch(type) {
