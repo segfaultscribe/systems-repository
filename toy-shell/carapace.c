@@ -9,12 +9,16 @@ int main(){
 
         char input[MAX_BUFFER_SIZE];
         char exit_sequence[] = "exit";
-        printf("%s", input);
+
+        fgets(input, sizeof(input), stdin);
+        //strcspn will return the first index of the second argument in the first argument
+        input[strcspn(input, "\n")] = '\0';
         if(strcmp(input, exit_sequence) == 0){
-            printf("breaking up!");
+            printf("Bye!\n");
             break;
         }
-        // printf("shell echoes: %s\n", input);
+        //just echo for now
+        printf("shell echoes: %s\n", input);
     }
     return 0;
 }
