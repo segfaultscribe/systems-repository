@@ -240,6 +240,36 @@ int main(int argc, char *argv[]){
                 LoadedSegment newSegment = {segment, load.p_vaddr, load.p_memsz, load.p_flags};
                 load_segments[loadIdx++] = newSegment;
             }
+
+            if (load.p_type == PT_INTERP) {
+                char *interp = malloc(load.p_filesz + 1);
+                if (!interp) {
+                    fprintf(stderr, "Failed to allocate memory for INTERP\n");
+                    free(phdrs);
+                    close(fd);
+                    return 1;
+                }
+
+                // move to interpreter path offset
+                off_t cur = lseek(fd, 0, SEEK_CUR); // save current pos
+                lseek(fd, load.p_offset, SEEK_SET);
+
+                ssize_t n = read(fd, interp, load.p_filesz);
+                if (n != (ssize_t)load.p_filesz) {
+                    perror("read INTERP");
+                    free(interp);
+                    free(phdrs);
+                    close(fd);
+                    return 1;
+                }
+                interp[load.p_filesz] = '\0'; // null terminate
+
+                printf("\n\n    [INTERP] Dynamic loader path: %s\n\n", interp);
+
+                free(interp);
+
+                lseek(fd, cur, SEEK_SET); // restore file pos
+            }
         }
 
         void *entry_host = vaddr_to_host(load_segments, loadIdx, elf_headr.e_entry);
