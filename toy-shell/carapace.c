@@ -46,6 +46,13 @@ void execute_command(char **tokens, int is_background_process) {
         perror("Fork failed:");
     } else if (pid == 0) {
         // Child process
+        char *input_file = NULL;
+        handle_input_redirection(tokens, &input_file);
+
+        if (input_file != NULL) {
+            freopen(input_file, "r", stdin);
+        }
+
         if (execvp(tokens[0], tokens) == -1) {
             perror("execvp failed");
         }
@@ -57,6 +64,29 @@ void execute_command(char **tokens, int is_background_process) {
         } else {
             printf("[Background PID] %d\n", pid);
         }
+    }
+}
+
+int handle_input_redirection(char **tokens, char **input_file){
+    int t = 0;
+    while(tokens[t]!=NULL){
+        if(strcmp(tokens[t], "<") == 0){
+            if (tokens[t + 1] != NULL) {
+                *input_file = tokens[i + 1];
+
+                // remove the '<' and the filename after it
+                for (int t = i; tokens[j + 2] != NULL; j++) {
+                    tokens[j] = tokens[j + 2];
+                }
+                tokens[t] = NULL;
+
+                return 1;
+            } else {
+                fprintf(stderr, "Error: No input file specified after '<'\n");
+                return -1;
+            }
+        }
+        ++t;
     }
 }
 
