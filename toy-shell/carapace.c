@@ -46,11 +46,22 @@ void execute_command(char **tokens, int is_background_process) {
         perror("Fork failed:");
     } else if (pid == 0) {
         // Child process
-        char *input_file = NULL;
+        char *input_file = NULL, *output_file = NULL;
         handle_input_redirection(tokens, &input_file);
-
+        handle_output_redirection(tokens, &output_file);
+        // handle input file 
         if (input_file != NULL) {
-            freopen(input_file, "r", stdin);
+            if (freopen(input_file, "r", stdin) == NULL) {
+                perror("Failed to open input file");
+                _exit(1);
+            }
+        }
+        // handle output file
+        if (output_file != NULL) {
+            if (freopen(output_file, "w", stdout) == NULL) {
+                perror("Failed to open output file");
+                _exit(1);
+            }
         }
 
         if (execvp(tokens[0], tokens) == -1) {
@@ -69,13 +80,13 @@ void execute_command(char **tokens, int is_background_process) {
 
 int handle_input_redirection(char **tokens, char **input_file){
     int t = 0;
-    while(tokens[t]!=NULL){
+    while(tokens[t] != NULL){
         if(strcmp(tokens[t], "<") == 0){
             if (tokens[t + 1] != NULL) {
-                *input_file = tokens[i + 1];
+                *input_file = tokens[t + 1];
 
-                // remove the '<' and the filename after it
-                for (int t = i; tokens[j + 2] != NULL; j++) {
+                // Remove '<' and the filename
+                for (int j = t; tokens[j + 2] != NULL; j++) {
                     tokens[j] = tokens[j + 2];
                 }
                 tokens[t] = NULL;
@@ -88,7 +99,33 @@ int handle_input_redirection(char **tokens, char **input_file){
         }
         ++t;
     }
+    return 0;
 }
+
+int handle_output_redirection(char **tokens, char **output_file){
+    int t = 0;
+    while(tokens[t] != NULL){
+        if(strcmp(tokens[t], ">") == 0){
+            if (tokens[t + 1] != NULL) {
+                *output_file = tokens[t + 1];
+
+                // Remove '>' and the filename 
+                for (int j = t; tokens[j + 2] != NULL; j++) {
+                    tokens[j] = tokens[j + 2];
+                }
+                tokens[t] = NULL;
+
+                return 1;
+            } else {
+                fprintf(stderr, "Error: No output file specified after '>'\n");
+                return -1;
+            }
+        }
+        ++t;
+    }
+    return 0;
+}
+
 
 int main() {
     signal(SIGINT, handle_sigint);
