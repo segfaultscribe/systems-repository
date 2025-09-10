@@ -8,6 +8,9 @@
 #define MAX_BUFFER_SIZE 256
 #define MAX_TOKENS 50
 
+int handle_input_redirection(char **tokens, char **input_file);
+int handle_output_redirection(char **tokens, char **output_file);
+
 void handle_sigint(int sig) {
     printf("\ntiny-shell> ");
     fflush(stdout);
@@ -126,48 +129,66 @@ int handle_output_redirection(char **tokens, char **output_file){
     return 0;
 }
 
-void pipe_out(char **tokens){
-    int pipefd[2]; // 0 right end, 1 left end
+void pipe_out(char **tokens) {
+    int pipefd[2];
     if (pipe(pipefd) == -1) {
         perror("pipe failed");
         return;
     }
+
     int pipe_pos = 0;
     while (tokens[pipe_pos] != NULL && strcmp(tokens[pipe_pos], "|") != 0) {
         pipe_pos++;
     }
 
-    if(tokens[pipe_pos]==NULL){
+    if (tokens[pipe_pos] == NULL) {
         fprintf(stderr, "Error: No pipe symbol found\n");
         return;
     }
-    tokens[pipe_pos] = NULL;  
 
-    char **cmd1 = tokens;            
-    char **cmd2 = &tokens[pipe_pos + 1];  
+    tokens[pipe_pos] = NULL;
+    char **cmd1 = tokens;
+    char **cmd2 = &tokens[pipe_pos + 1];
 
-    // we need to create two child process for each side of the pipe | 
+    char *input_file1 = NULL, *output_file1 = NULL;
+    char *input_file2 = NULL, *output_file2 = NULL;
 
-    //process 1
+    handle_input_redirection(cmd1, &input_file1);
+    handle_output_redirection(cmd1, &output_file1);
+    handle_input_redirection(cmd2, &input_file2);
+    handle_output_redirection(cmd2, &output_file2);
+
     pid_t pid1 = fork();
     if (pid1 == 0) {
-        // First child process
-        close(pipefd[0]);                 
-        dup2(pipefd[1], STDOUT_FILENO);      
-        close(pipefd[1]);                     
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+
+        if (input_file1) {
+            freopen(input_file1, "r", stdin);
+        }
+        if (output_file1) {
+            freopen(output_file1, "w", stdout);
+        }
 
         if (execvp(cmd1[0], cmd1) == -1) {
             perror("execvp cmd1 failed");
             _exit(1);
         }
     }
-    //process 2
+
     pid_t pid2 = fork();
     if (pid2 == 0) {
-        // Second child process
-        close(pipefd[1]);                     
-        dup2(pipefd[0], STDIN_FILENO);       
-        close(pipefd[0]);                     
+        close(pipefd[1]);
+        dup2(pipefd[0], STDIN_FILENO);
+        close(pipefd[0]);
+
+        if (input_file2) {
+            freopen(input_file2, "r", stdin);
+        }
+        if (output_file2) {
+            freopen(output_file2, "w", stdout);
+        }
 
         if (execvp(cmd2[0], cmd2) == -1) {
             perror("execvp cmd2 failed");
