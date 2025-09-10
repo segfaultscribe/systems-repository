@@ -9,12 +9,12 @@
 #define MAX_TOKENS 50
 
 void handle_sigint(int sig) {
-    printf("\ncarapace> ");
+    printf("\ntiny-shell> ");
     fflush(stdout);
 }
 
 void print_prompt() {
-    printf("carapace> ");
+    printf("tiny-shell> ");
     fflush(stdout);
 }
 
