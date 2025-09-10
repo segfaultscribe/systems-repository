@@ -1,4 +1,4 @@
-Tiny Shell in C
+# Tiny Shell in C
 
 A very simple shell implementation in C demonstrating basic process management and I/O redirection.
 
@@ -8,8 +8,6 @@ A very simple shell implementation in C demonstrating basic process management a
 - Single pipe support (|) between two commands
 - Handles Ctrl+C without exiting the shell
 - Interactive prompt loop until exit command
-
-<br>
 
 ### Example
 ```
