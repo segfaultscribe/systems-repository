@@ -126,6 +126,61 @@ int handle_output_redirection(char **tokens, char **output_file){
     return 0;
 }
 
+void pipe_out(char **tokens){
+    int pipefd[2]; // 0 right end, 1 left end
+    if (pipe(pipefd) == -1) {
+        perror("pipe failed");
+        return;
+    }
+    int pipe_pos = 0;
+    while (tokens[pipe_pos] != NULL && strcmp(tokens[pipe_pos], "|") != 0) {
+        pipe_pos++;
+    }
+
+    if(tokens[pipe_pos]==NULL){
+        fprintf(stderr, "Error: No pipe symbol found\n");
+        return;
+    }
+    tokens[pipe_pos] = NULL;  
+
+    char **cmd1 = tokens;            
+    char **cmd2 = &tokens[pipe_pos + 1];  
+
+    // we need to create two child process for each side of the pipe | 
+
+    //process 1
+    pid_t pid1 = fork();
+    if (pid1 == 0) {
+        // First child process
+        close(pipefd[0]);                 
+        dup2(pipefd[1], STDOUT_FILENO);      
+        close(pipefd[1]);                     
+
+        if (execvp(cmd1[0], cmd1) == -1) {
+            perror("execvp cmd1 failed");
+            _exit(1);
+        }
+    }
+    //process 2
+    pid_t pid2 = fork();
+    if (pid2 == 0) {
+        // Second child process
+        close(pipefd[1]);                     
+        dup2(pipefd[0], STDIN_FILENO);       
+        close(pipefd[0]);                     
+
+        if (execvp(cmd2[0], cmd2) == -1) {
+            perror("execvp cmd2 failed");
+            _exit(1);
+        }
+    }
+
+    close(pipefd[0]);
+    close(pipefd[1]);
+
+    waitpid(pid1, NULL, 0);
+    waitpid(pid2, NULL, 0);
+}
 
 int main() {
     signal(SIGINT, handle_sigint);
@@ -148,7 +203,19 @@ int main() {
             if (tokenCount == 0) {
                 continue;  // No command entered, skip
             }
-            execute_command(tokens, is_background_process);
+            int has_pipe = 0;
+            for (int i = 0; i < tokenCount; i++) {
+                if (strcmp(tokens[i], "|") == 0) {
+                    has_pipe = 1;
+                    break;
+                }
+            }
+
+            if (has_pipe) {
+                pipe_out(tokens);
+            } else {
+                execute_command(tokens, is_background_process);
+            }
         } else {
             printf("Error reading input!\n");
         }
