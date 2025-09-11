@@ -41,6 +41,25 @@ void handle_put(char *key, char *value){
     fclose(f);
 }
 
+char *handle_get(char *key, char *value_out){
+    FILE *f = fopen("store.txt", "r");
+    if(f == NULL){
+        perror("Failed to open file");
+        return;
+    }
+
+    char value[512];
+    while(fgets(value, sizeof value, f) != NULL){
+        value[strcspn(value, "\n")] = '\0';
+        char *current_key = strtok(value, "=");
+
+        if(strcmp(current_key, key) == 0){
+            char *current_value = strtok(NULL, " ");
+            strncpy(value_out, current_value, sizeof(current_value));
+        }
+    }
+}
+
 int main(){
 
     while(1){
@@ -59,14 +78,22 @@ int main(){
                 char *key = strtok(NULL, " ");
                 char *value = strtok(NULL, " "); 
                 char *overflow = strtok(NULL, " ");
-
                 if(overflow != NULL){
                     error_out("INVALID PUT FORMAT!");
                     fflush(stdout);
                     continue;
                 }
-
                 handle_put(key, value);
+            } else if(strcmp(word, "GET") == 0){
+                char *key = strtok(NULL, " ");
+                char *overflow = strtok(NULL, " ");
+                if(overflow != NULL){
+                    error_out("INVALID GET FORMAT!");
+                    fflush(stdout);
+                    continue;
+                }
+                char value[512];
+                handle_get(key, value);
             }
         }
 
