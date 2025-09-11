@@ -18,9 +18,28 @@ void error_out(const char *err){
     fprintf(stderr, "%s\n", err);
 }
 
-// void handle_put(char *key, char *value){
-//     FILE *f = fopen("store.txt", "w");
-// }
+void handle_put(char *key, char *value){
+    FILE *f = fopen("store.txt", "w");
+    if (f == NULL) {
+        perror("Failed to open File");
+        return;
+    }
+    char kv[700];
+
+    if (snprintf(kv, sizeof(kv), "%s=%s", key, value) >= sizeof(kv)) {
+        fprintf(stderr, "Key-value pair too long, truncating.\n");
+        // continuing
+    }
+
+    if (fprintf(f, "%s", kv) < 0) {
+        perror("Write failed");
+        fclose(f); // Try to close even if write fails
+        return;
+    }
+    printf("Succesfully written to file: [%s]\n", kv);
+    
+    fclose(f);
+}
 
 int main(){
 
@@ -29,6 +48,7 @@ int main(){
 
         char input[700];
         if(fgets(input, sizeof(input), stdin) != NULL){
+            input[strcspn(input, "\n")] = '\0';
             if (strcmp(input, "exit\n") == 0) {
                 printf("Bye!\n");
                 break;
@@ -46,7 +66,7 @@ int main(){
                     continue;
                 }
 
-                // handle_put(key, value);
+                handle_put(key, value);
             }
         }
 
