@@ -19,7 +19,7 @@ void error_out(const char *err){
 }
 
 void handle_put(char *key, char *value){
-    FILE *f = fopen("store.txt", "w");
+    FILE *f = fopen("store.txt", "a");
     if (f == NULL) {
         perror("Failed to open File");
         return;
@@ -31,7 +31,7 @@ void handle_put(char *key, char *value){
         // continuing
     }
 
-    if (fprintf(f, "%s", kv) < 0) {
+    if (fprintf(f, "%s\n", kv) < 0) {
         perror("Write failed");
         fclose(f); // Try to close even if write fails
         return;
@@ -49,7 +49,7 @@ int main(){
         char input[700];
         if(fgets(input, sizeof(input), stdin) != NULL){
             input[strcspn(input, "\n")] = '\0';
-            if (strcmp(input, "exit\n") == 0) {
+            if (strcmp(input, "exit") == 0) {
                 printf("Bye!\n");
                 break;
             }
