@@ -26,11 +26,16 @@ void error_out(const char *err){
 }
 
 void handle_put(char *key, char *value, char *FILE_NAME){
+    if (!key || !value || !FILE_NAME) {
+        error_out("Null argument passed to handle_put");
+        return;
+    }
     FILE *f = fopen(FILE_NAME, "a+");
     if (f == NULL) {
         perror("Failed to open File");
         return;
     }
+    rewind(f);
     char kv[700];
 
     if (snprintf(kv, sizeof(kv), "%s=%s", key, value) >= sizeof(kv)) {
@@ -38,18 +43,16 @@ void handle_put(char *key, char *value, char *FILE_NAME){
         // continuing
     }
     char line[700];
-
     while(fgets(line, sizeof line, f) != NULL){
         line[strcspn(line, "\n")] = '\0';
         char *current_key = strtok(line, "=");
-        if(strcmp(current_key, key) == 0){
+        if(current_key && strcmp(current_key, key) == 0){
             error_out("EXISITING key error!");
             printf("!! Use UPDATE to change value\n");
             fclose(f);
             return;
         }
     }
-
     if (fprintf(f, "%s\n", kv) < 0) {
         perror("Write failed");
         fclose(f); // Try to close even if write fails
@@ -80,7 +83,7 @@ void handle_get(char *key, char *value_out, size_t value_out_size){
             return;
         }
     }
-    if(value_out[0] = '\0'){
+    if(value_out[0] == '\0'){
         fprintf(stderr, "VALUE for key: %s NOT FOUND", key);
 
     }
@@ -129,20 +132,16 @@ void handle_delete(char *key){
     int del_status = remove("store.txt");
     if(del_status != 0){
         error_out("Error in delete operation!");
-        fclose(from);
-        fclose(to);
         return;
     }
 
     int rename_status = rename("temp.txt", "store.txt");
     if(rename_status != 0){
         error_out("Error in delete operation!");
-        fclose(from);
-        fclose(to);
         return;
     }
 
-    printf("Successfully DELETED key: %s with VALUE: %s\n", key, value);
+    printf("Successfully DELETED [KEY: %s, VALUE: %s]\n", key, value);
 }
 
 void handle_list(){
@@ -153,14 +152,19 @@ void handle_list(){
         char *key = strtok(key_value, "=");
         char *value = strtok(NULL, "=");
         if(key && value){
-            printf("KEY: %s, VALUE: %s", key, value);
+            printf("KEY: %s, VALUE: %s\n", key, value);
         } 
     }
     fclose(f);
 }
 
 void handle_update(char *key, char *value){
-
+    // delete the old key value
+    // add the new key value
+    // lol
+    handle_delete(key);
+    handle_put(key, value, GLOBAL_FILE_NAME);
+    printf("Successfully Updated KEY: %s, with VALUE: %s", key, value);
 } 
 
 void print_help() {
@@ -188,7 +192,12 @@ void print_help() {
     printf("=========================================\n");
 }
 
-int main(){
+int main(int argc, char *argv[]){
+    
+    if (argc > 1 && strcmp(argv[1], "--help") == 0) {
+        print_help();
+        return 0;
+    }
 
     while(1){
         cli_prompt();
@@ -203,11 +212,14 @@ int main(){
             }
             // Extract the first word to find the command
             char *word = strtok(input, " ");
+            if (word == NULL) {
+                continue; // empty line, prompt again
+            }
             if(strcmp(word, "PUT") == 0){               // Handle PUT instruction
                 char *key = strtok(NULL, " ");
                 char *value = strtok(NULL, " "); 
                 char *overflow = strtok(NULL, " ");
-                if(overflow != NULL){
+                if(!key || !value || overflow != NULL){
                     error_out("INVALID PUT FORMAT!");
                     fflush(stdout);
                     continue;
@@ -216,7 +228,7 @@ int main(){
             } else if(strcmp(word, "GET") == 0){        // Handle GET instruction
                 char *key = strtok(NULL, " ");
                 char *overflow = strtok(NULL, " ");
-                if(overflow != NULL){
+                if(!key || overflow != NULL){
                     error_out("INVALID GET FORMAT!");
                     fflush(stdout);
                     continue;
@@ -227,7 +239,7 @@ int main(){
             } else if(strcmp(word, "DELETE") == 0){     // Handle DELETE instruction
                 char *key = strtok(NULL, " ");
                 char *overflow = strtok(NULL, " ");
-                if(overflow != NULL){
+                if(!key || overflow != NULL){
                     error_out("INVALID DELETE FORMAT!");
                     fflush(stdout);
                     continue;
@@ -235,6 +247,16 @@ int main(){
                 handle_delete(key);
             } else if(strcmp(word, "LIST") == 0){
                 handle_list();
+            } else if(strcmp(word, "UPDATE") == 0){
+                char *key = strtok(NULL, " ");
+                char *value = strtok(NULL, " "); 
+                char *overflow = strtok(NULL, " ");
+                if (!key || !value || overflow != NULL) {
+                    error_out("INVALID UPDATE FORMAT!");
+                    fflush(stdout);
+                    continue;
+                }
+                handle_update(key, value);
             } else if(strcmp(word, "help") == 0 || strcmp(word, "HELP") == 0 ){
                 print_help();
                 continue;

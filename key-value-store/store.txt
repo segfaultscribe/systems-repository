@@ -1,4 +1,1 @@
-one=two
-two=three
-three=four
-
+one=three
