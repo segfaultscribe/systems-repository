@@ -133,6 +133,46 @@ void handle_delete(char *key){
     printf("Successfully DELETED key: %s with VALUE: %s\n", key, value);
 }
 
+void handle_list(){
+    //we'll list stuff in'ere
+    FILE *f = fopen("store.txt", "r");
+    char key_value[700];
+    while(fgets(key_value, sizeof key_value, f) != NULL){
+        char *key = strtok(key_value, "=");
+        char *value = strok(NULL, "=");
+        if(key && value){
+            printf("KEY: %s, VALUES: %s", key, value);
+        } 
+    }
+    fclose(f);
+}
+
+void print_help() {
+    printf("=========================================\n");
+    printf("           SIMPLE KEY VALUE STORE        \n");
+    printf("=========================================\n");
+    printf("Description:\n");
+    printf("  A simple, persistent key-value store written in C.\n\n");
+
+    printf("Usage:\n");
+    printf("  Type commands at the prompt as shown below.\n\n");
+
+    printf("Command List:\n");
+    printf("  HELP                       : Show this help message\n");
+    printf("  PUT <key> <value>          : Assign <value> to <key> and store it\n");
+    printf("  UPDATE <key> <value>       : Update <key> with a new <value>\n");
+    printf("  GET <key>                  : Fetch the value associated with <key>\n");
+    printf("  DELETE <key>               : Delete the key-value pair from storage\n");
+    printf("  LIST                       : List all key-value pairs in the store\n");
+
+    printf("\nTips:\n");
+    printf("  - Keys and values are stored line-by-line in a file.\n");
+    printf("  - Data is persistent between runs.\n");
+
+    printf("=========================================\n");
+}
+
+
 int main(){
 
     while(1){
@@ -178,6 +218,14 @@ int main(){
                     continue;
                 }
                 handle_delete(key);
+            } else if(strcmp(word, "LIST") == 0){
+
+            } else if(strcmp(word, "help") == 0 || strcmp(word, "HELP") == 0 ){
+                print_help();
+                continue;
+            } else {
+                printf("Unknown Command: %s  | use 'help' to know working commands\n", word);
+                continue;
             }
         }
 
