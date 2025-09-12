@@ -7,14 +7,14 @@
             PUT <key> <value>
             GET <key>
             key: max 128 chars
-            value max 512 chars */ √
+            value max 512 chars */ 
 
 /*phase 2:  DELETE, LIST commands
             DELETE <key>
             LIST
 */
 
-#define FILE_NAME "store.txt"
+#define GLOBAL_FILE_NAME "store.txt"
 
 void cli_prompt(){
     printf("Store $> ");
@@ -77,20 +77,38 @@ void handle_get(char *key, char *value_out, size_t value_out_size){
 
 void handle_delete(char *key){
     FILE *from = fopen("store.txt", "r");
-    FILE *to = fopen("temp.txt");
+    FILE *to = fopen("temp.txt", "w");
+    if(from == NULL){
+        perror("Failed to open file");
+        return;
+    }
+    if(to == NULL){
+        perror("Failed to open file");
+        return;
+    }
 
     char line[700];
-    int found;
+    int found = 0;
     char value[512];
+
     while(fgets(line, sizeof line, from) != NULL){
         line[strcspn(line, "\n")] = '\0';
+        char hold_line[700];
+        strncpy(hold_line, line, sizeof hold_line);
         char *current_key = strtok(line, "=");
-        if(strcmp(current_key, key) == 0){
-            value = strtok(line, "=");
-            ++found;
+        char *current_value = strtok(NULL, "=");
+
+        if (current_key && current_value && strcmp(current_key, key) == 0) {
+            snprintf(value, sizeof value, "%s", current_value);
+            found = 1;
+            continue; 
         }
-        fprintf(to, "%s\n", line);
+
+        fprintf(to, "%s\n", hold_line);
     }
+    
+    fclose(from);
+    fclose(to);
 
     if(found == 0){
         printf("KEY %s doesn't EXIST!", key);
@@ -112,9 +130,7 @@ void handle_delete(char *key){
         return;
     }
 
-    printf("Successfully DELETED key: %s with VALUE: %s", key, value);
-
-
+    printf("Successfully DELETED key: %s with VALUE: %s\n", key, value);
 }
 
 int main(){
@@ -141,7 +157,7 @@ int main(){
                     fflush(stdout);
                     continue;
                 }
-                handle_put(key, value, FILE_NAME);
+                handle_put(key, value, GLOBAL_FILE_NAME);
             } else if(strcmp(word, "GET") == 0){        // Handle GET instruction
                 char *key = strtok(NULL, " ");
                 char *overflow = strtok(NULL, " ");
