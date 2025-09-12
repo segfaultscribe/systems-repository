@@ -7,7 +7,14 @@
             PUT <key> <value>
             GET <key>
             key: max 128 chars
-            value max 512 chars */
+            value max 512 chars */ √
+
+/*phase 2:  DELETE, LIST commands
+            DELETE <key>
+            LIST
+*/
+
+#define FILE_NAME "store.txt"
 
 void cli_prompt(){
     printf("Store $> ");
@@ -18,8 +25,8 @@ void error_out(const char *err){
     fprintf(stderr, "%s\n", err);
 }
 
-void handle_put(char *key, char *value){
-    FILE *f = fopen("store.txt", "a");
+void handle_put(char *key, char *value, char *FILE_NAME){
+    FILE *f = fopen(FILE_NAME, "a");
     if (f == NULL) {
         perror("Failed to open File");
         return;
@@ -68,21 +75,64 @@ void handle_get(char *key, char *value_out, size_t value_out_size){
     fclose(f);
 }
 
+void handle_delete(char *key){
+    FILE *from = fopen("store.txt", "r");
+    FILE *to = fopen("temp.txt");
+
+    char line[700];
+    int found;
+    char value[512];
+    while(fgets(line, sizeof line, from) != NULL){
+        line[strcspn(line, "\n")] = '\0';
+        char *current_key = strtok(line, "=");
+        if(strcmp(current_key, key) == 0){
+            value = strtok(line, "=");
+            ++found;
+        }
+        fprintf(to, "%s\n", line);
+    }
+
+    if(found == 0){
+        printf("KEY %s doesn't EXIST!", key);
+    }
+
+    int del_status = remove("store.txt");
+    if(del_status != 0){
+        error_out("Error in delete operation!");
+        fclose(from);
+        fclose(to);
+        return;
+    }
+
+    int rename_status = rename("temp.txt", "store.txt");
+    if(rename_status != 0){
+        error_out("Error in delete operation!");
+        fclose(from);
+        fclose(to);
+        return;
+    }
+
+    printf("Successfully DELETED key: %s with VALUE: %s", key, value);
+
+
+}
+
 int main(){
 
     while(1){
         cli_prompt();
 
         char input[700];
+        // Get stdin input
         if(fgets(input, sizeof(input), stdin) != NULL){
             input[strcspn(input, "\n")] = '\0';
             if (strcmp(input, "exit") == 0) {
                 printf("Bye!\n");
                 break;
             }
-            // We're in the main part
+            // Extract the first word to find the command
             char *word = strtok(input, " ");
-            if(strcmp(word, "PUT") == 0){
+            if(strcmp(word, "PUT") == 0){               // Handle PUT instruction
                 char *key = strtok(NULL, " ");
                 char *value = strtok(NULL, " "); 
                 char *overflow = strtok(NULL, " ");
@@ -91,8 +141,8 @@ int main(){
                     fflush(stdout);
                     continue;
                 }
-                handle_put(key, value);
-            } else if(strcmp(word, "GET") == 0){
+                handle_put(key, value, FILE_NAME);
+            } else if(strcmp(word, "GET") == 0){        // Handle GET instruction
                 char *key = strtok(NULL, " ");
                 char *overflow = strtok(NULL, " ");
                 if(overflow != NULL){
@@ -103,6 +153,15 @@ int main(){
                 char value[512];
                 handle_get(key, value, sizeof value);
                 printf("KEY: %s, VALUE: %s\n", key, value);
+            } else if(strcmp(word, "DELETE") == 0){     // Handle DELETE instruction
+                char *key = strtok(NULL, " ");
+                char *overflow = strtok(NULL, " ");
+                if(overflow != NULL){
+                    error_out("INVALID DELETE FORMAT!");
+                    fflush(stdout);
+                    continue;
+                }
+                handle_delete(key);
             }
         }
 
