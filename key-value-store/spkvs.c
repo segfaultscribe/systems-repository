@@ -26,7 +26,7 @@ void error_out(const char *err){
 }
 
 void handle_put(char *key, char *value, char *FILE_NAME){
-    FILE *f = fopen(FILE_NAME, "a");
+    FILE *f = fopen(FILE_NAME, "a+");
     if (f == NULL) {
         perror("Failed to open File");
         return;
@@ -36,6 +36,18 @@ void handle_put(char *key, char *value, char *FILE_NAME){
     if (snprintf(kv, sizeof(kv), "%s=%s", key, value) >= sizeof(kv)) {
         fprintf(stderr, "Key-value pair too long, truncating.\n");
         // continuing
+    }
+    char line[700];
+
+    while(fgets(line, sizeof line, f) != NULL){
+        line[strcspn(line, "\n")] = '\0';
+        char *current_key = strtok(line, "=");
+        if(strcmp(current_key, key) == 0){
+            error_out("EXISITING key error!");
+            printf("!! Use UPDATE to change value\n");
+            fclose(f);
+            return;
+        }
     }
 
     if (fprintf(f, "%s\n", kv) < 0) {
@@ -139,13 +151,17 @@ void handle_list(){
     char key_value[700];
     while(fgets(key_value, sizeof key_value, f) != NULL){
         char *key = strtok(key_value, "=");
-        char *value = strok(NULL, "=");
+        char *value = strtok(NULL, "=");
         if(key && value){
-            printf("KEY: %s, VALUES: %s", key, value);
+            printf("KEY: %s, VALUE: %s", key, value);
         } 
     }
     fclose(f);
 }
+
+void handle_update(char *key, char *value){
+
+} 
 
 void print_help() {
     printf("=========================================\n");
@@ -171,7 +187,6 @@ void print_help() {
 
     printf("=========================================\n");
 }
-
 
 int main(){
 
@@ -219,7 +234,7 @@ int main(){
                 }
                 handle_delete(key);
             } else if(strcmp(word, "LIST") == 0){
-
+                handle_list();
             } else if(strcmp(word, "help") == 0 || strcmp(word, "HELP") == 0 ){
                 print_help();
                 continue;
