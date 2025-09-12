@@ -41,7 +41,7 @@ void handle_put(char *key, char *value){
     fclose(f);
 }
 
-char *handle_get(char *key, char *value_out){
+void handle_get(char *key, char *value_out, size_t value_out_size){
     FILE *f = fopen("store.txt", "r");
     if(f == NULL){
         perror("Failed to open file");
@@ -54,10 +54,18 @@ char *handle_get(char *key, char *value_out){
         char *current_key = strtok(value, "=");
 
         if(strcmp(current_key, key) == 0){
-            char *current_value = strtok(NULL, " ");
-            strncpy(value_out, current_value, sizeof(current_value));
+            char *current_value = strtok(NULL, "=");
+            strncpy(value_out, current_value, value_out_size - 1);
+            value_out[value_out_size - 1] = '\0';
+            fclose(f);
+            return;
         }
     }
+    if(value_out[0] = '\0'){
+        fprintf(stderr, "VALUE for key: %s NOT FOUND", key);
+
+    }
+    fclose(f);
 }
 
 int main(){
@@ -93,7 +101,8 @@ int main(){
                     continue;
                 }
                 char value[512];
-                handle_get(key, value);
+                handle_get(key, value, sizeof value);
+                printf("KEY: %s, VALUE: %s\n", key, value);
             }
         }
 
