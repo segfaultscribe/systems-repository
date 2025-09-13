@@ -53,3 +53,26 @@ void check_arrivals(int current_time);
 
 // ----------------------------------------------------------
 
+int main() {
+    init_queues();
+
+    // Add some dummy processes
+    add_process(1, 0, 5);
+    add_process(2, 2, 8);
+    add_process(3, 4, 3);
+
+    // start simulation
+    simulate_mlfq();
+
+    return 0;
+}
+
+void add_process(int pid, int arrival_time, int burst_time) {
+    Process* p = &process_list[total_processes++];
+    p->pid = pid;
+    p->arrival_time = arrival_time;
+    p->burst_time = burst_time;
+    p->remaining_time = burst_time;
+    p->current_queue = 0; // assign highest priority initially
+    p->state = READY;
+}
