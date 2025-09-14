@@ -76,3 +76,13 @@ void add_process(int pid, int arrival_time, int burst_time) {
     p->current_queue = 0; // assign highest priority initially
     p->state = READY;
 }
+
+void init_queues(){
+     for (int i = 0; i < MAX_QUEUE_LEVELS; i++) {
+        mlfq[i].front = 0;
+        mlfq[i].rear = -1;
+        for (int j = 0; j < MAX_PROCESSES; j++) {
+            mlfq[i].queue[j] = NULL;
+        }
+    }
+}
