@@ -86,3 +86,12 @@ void init_queues(){
         }
     }
 }
+
+void enqueue(ProcessQueue* q, Process* p){
+    if (q->rear < MAX_PROCESSES - 1) {
+        q->rear++;                     
+        q->queue[q->rear] = p;         
+    } else {
+        printf("Queue overflow! Cannot enqueue process %d\n", p->pid);
+    }
+}
