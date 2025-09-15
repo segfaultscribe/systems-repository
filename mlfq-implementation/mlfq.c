@@ -99,5 +99,26 @@ void enqueue(ProcessQueue* q, Process* p){
 }
 
 int is_empty(ProcessQueue* q){
-    return q->rear < q->front;
+    return q->rear < q->front; // lol, that's it
+}
+
+Process* dequeue(ProcessQueue* q){
+    if(is_empty(q)){
+        return NULL;
+    }
+
+    Process *p = q->queue[q->front];
+    q->queue[q->front] = NULL;
+    q->front++;
+
+    if (q->front > q->rear) {
+        q->front = 0;
+        q->rear = -1;
+    }
+
+    return p;
+}
+
+void run_process(Process* p, int queue_level, int current_time){
+    
 }
