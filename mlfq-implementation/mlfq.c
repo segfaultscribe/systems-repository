@@ -120,5 +120,15 @@ Process* dequeue(ProcessQueue* q){
 }
 
 void run_process(Process* p, int queue_level, int current_time){
-    
+    p->state = RUNNING;
+    int time_quant = time_quantum[queue_level];
+    if(time_quant == -1){
+        // FCFS
+        // running full remaining time
+        printf("[Running] Process: %d", p->pid);
+
+    } else {
+        int runtime = min(p->remaining_time, time_quantum)
+    }
+
 }
