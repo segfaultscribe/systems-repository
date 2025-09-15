@@ -6,7 +6,7 @@
 #define MAX_QUEUE_LEVELS 3
 
 // Time quantums for each queue level
-const int time_quantum[MAX_QUEUE_LEVELS] = {2, 4, -1}; // -1 for FCFS (no preemption)
+const int time_quantum[MAX_QUEUE_LEVELS] = {2, 4, -1}; // -1 for FCFS (no preemption) | can switch to RR
 
 // Process States
 typedef enum {
@@ -15,7 +15,7 @@ typedef enum {
     FINISHED
 } ProcessState;
 
-// Process Control Block (PCB)
+// Process Control Block (PCB) : Holda information about each state
 typedef struct {
     int pid;
     int arrival_time;
@@ -77,6 +77,7 @@ void add_process(int pid, int arrival_time, int burst_time) {
     p->state = READY;
 }
 
+// initialize all queues with NULL Values
 void init_queues(){
      for (int i = 0; i < MAX_QUEUE_LEVELS; i++) {
         mlfq[i].front = 0;
@@ -87,6 +88,7 @@ void init_queues(){
     }
 }
 
+// add a process to the 
 void enqueue(ProcessQueue* q, Process* p){
     if (q->rear < MAX_PROCESSES - 1) {
         q->rear++;                     
@@ -94,4 +96,8 @@ void enqueue(ProcessQueue* q, Process* p){
     } else {
         printf("Queue overflow! Cannot enqueue process %d\n", p->pid);
     }
+}
+
+int is_empty(ProcessQueue* q){
+    return q->rear < q->front;
 }
