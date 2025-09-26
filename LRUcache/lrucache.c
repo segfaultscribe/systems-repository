@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 
 #define CACHE_SIZE 1000  // or use dynamic allocation
 
@@ -32,10 +33,18 @@ typedef struct DllNode {
 
 DllNode* LRUCache[CACHE_SIZE]; 
 
+DllNode* createNode(int key, int value) {
+    DllNode* node = (DllNode*)malloc(sizeof(DllNode));
+    node->key = key;
+    node->value = value;
+    node->prev = node->next = NULL;
+    return node;
+}
+
 
 int main(){
     while(1){
-        
+
     }
     return 0;
 }
