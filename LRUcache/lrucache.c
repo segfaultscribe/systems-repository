@@ -40,7 +40,20 @@ DllNode* createNode(int key, int value) {
     node->prev = node->next = NULL;
     return node;
 }
+// basic linkedlist implementation
+void iterate(DllNode* head){
+    DllNode* node = head;
+    while(node!=NULL){
+        //node->data
+        //do-stuff
+        node = node->next;
+    }
+}
 
+void get(char *key){
+    DllNode node;
+
+}
 
 int main(){
     while(1){
